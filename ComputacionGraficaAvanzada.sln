@@ -67,6 +67,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "31-OpenAL", "31-OpenAL\31-O
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "32-OpenALSourceRotation", "32-OpenALSourceRotation\32-OpenALSourceRotation.vcxproj", "{1BAF8798-C49E-460D-9B27-873A2FAC3C65}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SistemaSolar", "SistemaSolar\SistemaSolar.vcxproj", "{EF7F6FB5-8F2E-4AB4-9360-8A4B7D4F1959}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -269,6 +271,12 @@ Global
 		{1BAF8798-C49E-460D-9B27-873A2FAC3C65}.Release|x64.ActiveCfg = Release|Win32
 		{1BAF8798-C49E-460D-9B27-873A2FAC3C65}.Release|x86.ActiveCfg = Release|Win32
 		{1BAF8798-C49E-460D-9B27-873A2FAC3C65}.Release|x86.Build.0 = Release|Win32
+		{EF7F6FB5-8F2E-4AB4-9360-8A4B7D4F1959}.Debug|x64.ActiveCfg = Debug|Win32
+		{EF7F6FB5-8F2E-4AB4-9360-8A4B7D4F1959}.Debug|x86.ActiveCfg = Debug|Win32
+		{EF7F6FB5-8F2E-4AB4-9360-8A4B7D4F1959}.Debug|x86.Build.0 = Debug|Win32
+		{EF7F6FB5-8F2E-4AB4-9360-8A4B7D4F1959}.Release|x64.ActiveCfg = Release|Win32
+		{EF7F6FB5-8F2E-4AB4-9360-8A4B7D4F1959}.Release|x86.ActiveCfg = Release|Win32
+		{EF7F6FB5-8F2E-4AB4-9360-8A4B7D4F1959}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
