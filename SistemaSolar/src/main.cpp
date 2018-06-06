@@ -30,6 +30,7 @@ Sphere sp(1.5, 50, 50, MODEL_MODE::VERTEX_COLOR);
 Sphere sp2(1.5, 50, 50, MODEL_MODE::VERTEX_LIGHT_TEXTURE);
 
 Shader lightingShader;
+Shader lightingShaderMix;
 Shader lampShader;
 Shader cubemapShader;
 Shader envCubeShader;
@@ -43,6 +44,18 @@ Texture textureEarth(GL_TEXTURE_2D, "../Textures/earth_daymap.jpg");
 Texture textureClouds(GL_TEXTURE_2D, "../Textures/earth_clouds.jpg");
 Texture textureEarthSpec(GL_TEXTURE_2D, "../Textures/earth_specular.tif");
 Texture textureEarthDiff(GL_TEXTURE_2D, "../Textures/earth_nightmap.jpg");
+Texture textureMercury(GL_TEXTURE_2D, "../Textures/mercury.jpg");
+Texture textureVenus(GL_TEXTURE_2D, "../Textures/venus_atmosphere.jpg");
+Texture textureVenusClouds(GL_TEXTURE_2D, "../Textures/venus_surface.jpg");
+Texture textureMars(GL_TEXTURE_2D, "../Textures/mars.jpg");
+Texture textureJupiter(GL_TEXTURE_2D, "../Textures/jupiter.jpg");
+Texture textureSaturn(GL_TEXTURE_2D, "../Textures/saturn.jpg");
+Texture textureUranus(GL_TEXTURE_2D, "../Textures/uranus.jpg");
+Texture textureNeptune(GL_TEXTURE_2D, "../Textures/neptune.jpg");
+
+
+
+
 
 CubemapTexture * cubeMaptexture = new CubemapTexture("../Textures/ame_nebula", "purplenebula_ft.tga", "purplenebula_bk.tga", "purplenebula_up.tga", "purplenebula_dn.tga", "purplenebula_rt.tga", "purplenebula_lf.tga");
 
@@ -128,6 +141,7 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 
 	modelo1.loadModel("../objects/cyborg/cyborg.obj");
 
+	lightingShaderMix.initialize("../Shaders/loadModelLightingMix.vs", "../Shaders/loadModelLightingMix.fs");
 	lightingShader.initialize("../Shaders/loadModelLighting.vs", "../Shaders/loadModelLighting.fs");
 	lampShader.initialize("../Shaders/lampShader.vs", "../Shaders/lampShader.fs");
 	cubemapShader.initialize("../Shaders/cubemapTexture.vs", "../Shaders/cubemapTexture.fs");
@@ -135,9 +149,20 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	textureDifuse.load();
 	textureSun.load();
 	textureEarth.load();
-	//textureClouds.load();
+	textureClouds.load();
 	textureEarthDiff.load();
 	textureEarthSpec.load();
+	textureMercury.load();
+	textureVenus.load();
+	textureVenusClouds.load();
+	textureMars.load();
+	textureJupiter.load();
+	textureSaturn.load();
+	textureUranus.load();
+	textureNeptune.load();
+
+
+
 	cubeMaptexture->Load();
 
 }
@@ -150,6 +175,7 @@ void destroyWindow() {
 void destroy() {
 	destroyWindow();
 	lightingShader.destroy();
+	lightingShaderMix.destroy();
 	lampShader.destroy();
 	cubemapShader.destroy();
 	envCubeShader.destroy();
@@ -231,8 +257,8 @@ void applicationLoop() {
 		GLint lightSpecularLoc = lightingShader.getUniformLocation(
 			"light.specular");
 		GLint lightPosLoc = lightingShader.getUniformLocation("light.position");
-		glUniform3f(lightAmbientLoc, 0.5f, 0.5f, 0.5f);
-		glUniform3f(lightDiffuseLoc, 0.5f, 0.5f, 0.5f); // Let's darken the light a bit to fit the scene
+		glUniform3f(lightAmbientLoc, 0.8f, 0.8f, 0.8f);
+		glUniform3f(lightDiffuseLoc, 0.6f, 0.6f, 0.6f); // Let's darken the light a bit to fit the scene
 		glUniform3f(lightSpecularLoc, 1.0f, 0.5f, 0.0f);
 		glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
 
@@ -246,9 +272,9 @@ void applicationLoop() {
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
-		glm::mat4 model;
-		model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		glm::mat4 sun;
+		sun = glm::scale(sun, glm::vec3(1.0, 1.0, 1.0));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(sun));
 
 		textureSun.bind(GL_TEXTURE0);
 		int ambientMapLoc = lightingShader.getUniformLocation("material.ambient");
@@ -258,6 +284,58 @@ void applicationLoop() {
 		lightingShader.turnOff();
 		/***********************************************************/
 
+		/******************** MERCURY ***********************************/
+		lightingShader.turnOn();
+
+		// Get the uniform locations
+		modelLoc = lightingShader.getUniformLocation("model");
+		viewLoc = lightingShader.getUniformLocation("view");
+		projLoc = lightingShader.getUniformLocation("projection");
+
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
+
+		glm::mat4 mercury;
+		mercury = glm::scale(mercury, glm::vec3(0.5, 0.5, 0.5));
+		mercury = glm::translate(mercury, glm::vec3(10.0f, 0.0f, 10.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(mercury));
+
+		textureMercury.bind(GL_TEXTURE0);
+		ambientMapLoc = lightingShader.getUniformLocation("material.ambient");
+		glUniform1i(ambientMapLoc, 0);
+
+		sp2.render();
+		lightingShader.turnOff();
+		/***********************************************************/
+
+		/******************** Venus ***********************************/
+		lightingShader.turnOn();
+
+		// Get the uniform locations
+		modelLoc = lightingShader.getUniformLocation("model");
+		viewLoc = lightingShader.getUniformLocation("view");
+		projLoc = lightingShader.getUniformLocation("projection");
+
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
+
+		glm::mat4 venus;
+		venus = glm::scale(venus, glm::vec3(0.5, 0.5, 0.5));
+		venus = glm::translate(venus, glm::vec3(20.0f, 0.0f, 20.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(venus));
+
+		textureVenus.bind(GL_TEXTURE0);
+		textureVenusClouds.bind(GL_TEXTURE1);
+
+		ambientMapLoc = lightingShader.getUniformLocation("material.ambient");
+		int venusClouds = lightingShader.getUniformLocation("material.ambient");
+		glUniform1i(ambientMapLoc, 0);
+		glUniform1i(ambientMapLoc, 1);
+
+
+		sp2.render();
+		lightingShader.turnOff();
+		/***********************************************************/
 
 		/******************** EARTH ***********************************/
 		lightingShader.turnOn();
@@ -270,21 +348,148 @@ void applicationLoop() {
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
-		model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
-		model = glm::translate(model, glm::vec3(30.0f,0.0f,30.0f));
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		glm::mat4 earth;
+		earth = glm::scale(earth, glm::vec3(0.5, 0.5, 0.5));
+		earth = glm::translate(earth, glm::vec3(30.0f,0.0f,30.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(earth));
 
 		textureEarth.bind(GL_TEXTURE0);
 		textureEarthDiff.bind(GL_TEXTURE1);
 		textureEarthSpec.bind(GL_TEXTURE2);
+		textureClouds.bind(GL_TEXTURE3);
 
 		ambientMapLoc = lightingShader.getUniformLocation("material.ambient");
 		int diffuseMapLoc = lightingShader.getUniformLocation("material.diffuse");
 		int specularMapLoc = lightingShader.getUniformLocation("material.specular");
+		
+		int clouds = lightingShader.getUniformLocation("material.segunda");
 
 		glUniform1i(diffuseMapLoc, 0);
 		glUniform1i(ambientMapLoc, 1);
 		glUniform1i(specularMapLoc, 2);
+		glUniform1i(clouds, 3);
+
+
+		sp2.render();
+		lightingShader.turnOff();
+		/***********************************************************/
+
+		/******************** MARS ***********************************/
+		lightingShader.turnOn();
+
+		// Get the uniform locations
+		modelLoc = lightingShader.getUniformLocation("model");
+		viewLoc = lightingShader.getUniformLocation("view");
+		projLoc = lightingShader.getUniformLocation("projection");
+
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
+
+		glm::mat4 mars;
+		mars = glm::scale(mars, glm::vec3(0.5, 0.5, 0.5));
+		mars = glm::translate(mars, glm::vec3(40.0f, 0.0f, 40.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(mars));
+
+		textureMars.bind(GL_TEXTURE0);
+		ambientMapLoc = lightingShader.getUniformLocation("material.ambient");
+		glUniform1i(ambientMapLoc, 0);
+
+		sp2.render();
+		lightingShader.turnOff();
+		/***********************************************************/
+
+		/******************** JUPITER ***********************************/
+		lightingShader.turnOn();
+
+		// Get the uniform locations
+		modelLoc = lightingShader.getUniformLocation("model");
+		viewLoc = lightingShader.getUniformLocation("view");
+		projLoc = lightingShader.getUniformLocation("projection");
+
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
+
+		glm::mat4 jupiter;
+		jupiter = glm::scale(jupiter, glm::vec3(0.5, 0.5, 0.5));
+		jupiter = glm::translate(jupiter, glm::vec3(50.0f, 0.0f, 50.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(jupiter));
+
+		textureJupiter.bind(GL_TEXTURE0);
+		ambientMapLoc = lightingShader.getUniformLocation("material.ambient");
+		glUniform1i(ambientMapLoc, 0);
+
+		sp2.render();
+		lightingShader.turnOff();
+		/***********************************************************/
+
+		/******************** SATURN ***********************************/
+		lightingShader.turnOn();
+
+		// Get the uniform locations
+		modelLoc = lightingShader.getUniformLocation("model");
+		viewLoc = lightingShader.getUniformLocation("view");
+		projLoc = lightingShader.getUniformLocation("projection");
+
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
+
+		glm::mat4 saturn;
+		saturn = glm::scale(saturn, glm::vec3(0.5, 0.5, 0.5));
+		saturn = glm::translate(saturn, glm::vec3(60.0f, 0.0f, 60.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(saturn));
+
+		textureSaturn.bind(GL_TEXTURE0);
+		ambientMapLoc = lightingShader.getUniformLocation("material.ambient");
+		glUniform1i(ambientMapLoc, 0);
+
+		sp2.render();
+		lightingShader.turnOff();
+		/***********************************************************/
+
+
+		/******************** URANUS ***********************************/
+		lightingShader.turnOn();
+
+		// Get the uniform locations
+		modelLoc = lightingShader.getUniformLocation("model");
+		viewLoc = lightingShader.getUniformLocation("view");
+		projLoc = lightingShader.getUniformLocation("projection");
+
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
+
+		glm::mat4 uranus;
+		uranus = glm::scale(uranus, glm::vec3(0.5, 0.5, 0.5));
+		uranus = glm::translate(uranus, glm::vec3(70.0f, 0.0f, 70.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(uranus));
+
+		textureUranus.bind(GL_TEXTURE0);
+		ambientMapLoc = lightingShader.getUniformLocation("material.ambient");
+		glUniform1i(ambientMapLoc, 0);
+
+		sp2.render();
+		lightingShader.turnOff();
+		/***********************************************************/
+
+		/******************** NEPTUNE ***********************************/
+		lightingShader.turnOn();
+
+		// Get the uniform locations
+		modelLoc = lightingShader.getUniformLocation("model");
+		viewLoc = lightingShader.getUniformLocation("view");
+		projLoc = lightingShader.getUniformLocation("projection");
+
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
+
+		glm::mat4 neptune;
+		neptune = glm::scale(neptune, glm::vec3(0.5, 0.5, 0.5));
+		neptune = glm::translate(neptune, glm::vec3(80.0f, 0.0f, 80.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(neptune));
+
+		textureNeptune.bind(GL_TEXTURE0);
+		ambientMapLoc = lightingShader.getUniformLocation("material.ambient");
+		glUniform1i(ambientMapLoc, 0);
 
 		sp2.render();
 		lightingShader.turnOff();
@@ -301,9 +506,10 @@ void applicationLoop() {
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
-		model = glm::translate(glm::mat4(), lightPos);
-		model = glm::scale(model, glm::vec3(0.4, 0.4, 0.4));
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		glm::mat4 light;
+		light = glm::translate(glm::mat4(), lightPos);
+		light = glm::scale(light, glm::vec3(0.4, 0.4, 0.4));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(light));
 		sp.render();
 		lampShader.turnOff();
 		/*************************************************************/
@@ -343,7 +549,7 @@ void applicationLoop() {
 		/****************************************************************/
 
 
-		/*********************** MODELO *********************************/
+		/*********************** MODELO *********************************
 		envCubeShader.turnOn();
 		
 		view = inputManager.getCameraFPS()->GetViewMatrix();
@@ -365,7 +571,7 @@ void applicationLoop() {
 		//modelo1.render(&envCubeShader);
 
 		envCubeShader.turnOff();
-		/********************************************************************/
+		********************************************************************/
 		glfwSwapBuffers(window);
 	}
 }

@@ -42,6 +42,8 @@
     <None Include="..\Shaders\lampShader.vs" />
     <None Include="..\Shaders\loadModelLighting.fs" />
     <None Include="..\Shaders\loadModelLighting.vs" />
+    <None Include="..\Shaders\loadModelLightingMix.fs" />
+    <None Include="..\Shaders\loadModelLightingMix.vs" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{ef7f6fb5-8f2e-4ab4-9360-8a4b7d4f1959}</ProjectGuid>

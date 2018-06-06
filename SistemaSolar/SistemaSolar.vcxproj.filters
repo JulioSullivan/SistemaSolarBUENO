@@ -100,5 +100,11 @@
     <None Include="..\Shaders\loadModelLighting.vs">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="..\Shaders\loadModelLightingMix.fs">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\Shaders\loadModelLightingMix.vs">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
