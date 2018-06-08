@@ -326,7 +326,7 @@ void applicationLoop() {
 
 
 		glm::mat4 sun;
-		sun = glm::scale(sun, glm::vec3(1.0, 1.0, 1.0));
+		sun = glm::scale(sun, glm::vec3(6.96, 6.96, 6.96));
 
 		//Rotación sobre el mismos eje Y
 		sun = glm::rotate(sun, (float)timeValue * 0.05f,
@@ -336,7 +336,15 @@ void applicationLoop() {
 
 		textureSun.bind(GL_TEXTURE0);
 		int ambientMapLoc = lightingShader.getUniformLocation("material.ambient");
+		int diffuseMapLoc = lightingShader.getUniformLocation("material.diffuse");
+		int specularMapLoc = lightingShader.getUniformLocation("material.specular");
+		int segundaMapLoc = lightingShader.getUniformLocation("material.segunda");
+
 		glUniform1i(ambientMapLoc, 0);
+		glUniform1i(diffuseMapLoc, 0);
+		glUniform1i(specularMapLoc, 5);
+		glUniform1i(segundaMapLoc, 5);
+
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
@@ -357,8 +365,9 @@ void applicationLoop() {
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 mercury;
-		mercury = glm::scale(mercury, glm::vec3(0.5, 0.5, 0.5));
+		mercury = glm::scale(mercury, glm::vec3(0.244, 0.244, 0.244));
 		mercury = orbit(mercury, 10.0, 15.0, 0.5, timeValue);
+		mercury = glm::translate(mercury, glm::vec3(57.9, 0.0, 0.0));
 		mercury = glm::rotate(mercury, (float)timeValue * 0.1f,
 			glm::vec3(0.0f, 1.0f, 0.0f));
 
@@ -429,8 +438,8 @@ void applicationLoop() {
 		textureClouds.bind(GL_TEXTURE3);
 
 		ambientMapLoc = lightingShader.getUniformLocation("material.ambient");
-		int diffuseMapLoc = lightingShader.getUniformLocation("material.diffuse");
-		int specularMapLoc = lightingShader.getUniformLocation("material.specular");
+		diffuseMapLoc = lightingShader.getUniformLocation("material.diffuse");
+		specularMapLoc = lightingShader.getUniformLocation("material.specular");
 
 		int clouds = lightingShader.getUniformLocation("material.segunda");
 
