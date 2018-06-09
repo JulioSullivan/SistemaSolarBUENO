@@ -147,7 +147,7 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	sp2.init();
 	sp2.load();
 
-	modelo1.loadModel("../objects/cyborg/cyborg.obj");
+	modelo1.loadModel("../objects/SistemaSolar/AlienSistemaSolar.dae");
 
 	lightingShaderMix.initialize("../Shaders/loadModelLightingMix.vs", "../Shaders/loadModelLightingMix.fs");
 	lightingShader.initialize("../Shaders/loadModelLighting.vs", "../Shaders/loadModelLighting.fs");
@@ -436,7 +436,7 @@ void applicationLoop() {
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 venus;
-		venus = orbit(venus, 20.0 * 6.1, 24.0 * 6.1, 0.42 , timeValue * animate);
+		venus = orbit(venus, 20.0 * 6.1, 24.0 * 6.1, 0.42, timeValue * animate);
 		venus = glm::rotate(venus, (float)timeValue * 0.3f,
 			glm::vec3(0.03f, -1.0f, 0.0f));
 		venus = glm::scale(venus, glm::vec3(0.605, 0.605, 0.605));
@@ -529,6 +529,8 @@ void applicationLoop() {
 
 
 		sp2.render();
+
+
 		lightingShader.turnOff();
 		/***********************************************************/
 
@@ -557,6 +559,15 @@ void applicationLoop() {
 		glUniform1i(ambientMapLoc, 0);
 
 		sp2.render();
+
+		glm::mat4 model1;
+		model1 = orbit(model1, 50.5 * 6.4, 54.4 * 6.4, 0.27, timeValue * animate);
+		model1 = glm::rotate(model1, (float)timeValue * 0.15f,
+			glm::vec3(0.0f, 1.0f, 0.0f));
+		model1 = glm::scale(model1, glm::vec3(0.16, 0.16, 0.16));
+		model1 = glm::translate(model1, glm::vec3(0.0, 68.0, 0.0));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model1));
+		modelo1.render(&lightingShader);
 		lightingShader.turnOff();
 		/***********************************************************/
 
