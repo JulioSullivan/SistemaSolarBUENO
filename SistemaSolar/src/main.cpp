@@ -45,6 +45,8 @@ Texture textureEarth(GL_TEXTURE_2D, "../Textures/earth_daymap.jpg");
 Texture textureClouds(GL_TEXTURE_2D, "../Textures/earth_clouds.jpg");
 Texture textureEarthSpec(GL_TEXTURE_2D, "../Textures/earth_specular.tif");
 Texture textureEarthDiff(GL_TEXTURE_2D, "../Textures/earth_nightmap.jpg");
+Texture textureMoon(GL_TEXTURE_2D, "../Textures/moon.jpg");
+
 Texture textureMercury(GL_TEXTURE_2D, "../Textures/mercury.jpg");
 Texture textureVenus(GL_TEXTURE_2D, "../Textures/venus_atmosphere.jpg");
 Texture textureVenusClouds(GL_TEXTURE_2D, "../Textures/venus_surface.jpg");
@@ -53,10 +55,8 @@ Texture textureJupiter(GL_TEXTURE_2D, "../Textures/jupiter.jpg");
 Texture textureSaturn(GL_TEXTURE_2D, "../Textures/saturn.jpg");
 Texture textureUranus(GL_TEXTURE_2D, "../Textures/uranus.jpg");
 Texture textureNeptune(GL_TEXTURE_2D, "../Textures/neptune.jpg");
-
-
-
-
+Texture texturePluto(GL_TEXTURE_2D, "../Textures/plutomap.jpg");
+Texture texturePlutoSpec(GL_TEXTURE_2D, "../Textures/plutobump.jpg");
 
 CubemapTexture * cubeMaptexture = new CubemapTexture("../Textures/ame_nebula", "purplenebula_ft.tga", "purplenebula_bk.tga", "purplenebula_up.tga", "purplenebula_dn.tga", "purplenebula_rt.tga", "purplenebula_lf.tga");
 
@@ -160,6 +160,7 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	textureClouds.load();
 	textureEarthDiff.load();
 	textureEarthSpec.load();
+	textureMoon.load();
 	textureMercury.load();
 	textureVenus.load();
 	textureVenusClouds.load();
@@ -168,6 +169,9 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	textureSaturn.load();
 	textureUranus.load();
 	textureNeptune.load();
+	texturePluto.load();
+	texturePlutoSpec.load();
+
 
 	cubeMaptexture->Load();
 
@@ -201,10 +205,11 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
 	{
 		// Animating the planets Orbit around the sun
 		// and also their own individual rotation about their own axis
-		if (animate == false)
-			animate = true;
-		else if (animate == true)
-			animate = false;
+		std::cout << "presionaste P" << std::endl;
+		if (animate == 0)
+			animate = 1;
+		else if (animate == 1)
+			animate = 0;
 	}
 	else if (key == GLFW_KEY_R && action == GLFW_PRESS)
 	{
@@ -283,7 +288,7 @@ void applicationLoop() {
 		//MODELO
 		glm::mat4 model;
 
-		projection = glm::perspective(45.0f, (float)screenWidth / (float)screenHeight, 0.1f, 100.0f);
+		projection = glm::perspective(45.0f, (float)screenWidth / (float)screenHeight, 0.1f, 5000.0f);
 
 		lightingShader.turnOn();
 
@@ -316,6 +321,7 @@ void applicationLoop() {
 		glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
 
 		GLfloat timeValue = TimeManager::Instance().GetTime() - lastTime;
+		animate = 0;
 
 
 		/******************** SUN ***********************************/
@@ -326,7 +332,7 @@ void applicationLoop() {
 
 
 		glm::mat4 sun;
-		sun = glm::scale(sun, glm::vec3(6.96, 6.96, 6.96));
+		sun = glm::scale(sun, glm::vec3(35.0, 35.0, 35.0));
 
 		//Rotación sobre el mismos eje Y
 		sun = glm::rotate(sun, (float)timeValue * 0.05f,
@@ -341,12 +347,49 @@ void applicationLoop() {
 		int segundaMapLoc = lightingShader.getUniformLocation("material.segunda");
 
 		glUniform1i(ambientMapLoc, 0);
-		glUniform1i(diffuseMapLoc, 0);
+		glUniform1i(diffuseMapLoc, 5);
 		glUniform1i(specularMapLoc, 5);
 		glUniform1i(segundaMapLoc, 5);
 
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
+
+
+		sp2.render();
+		lightingShader.turnOff();
+		/***********************************************************/
+
+
+		/******************** MOON ***********************************/
+		lightingShader.turnOn();
+
+		// Get the uniform locations
+		modelLoc = lightingShader.getUniformLocation("model");
+		viewLoc = lightingShader.getUniformLocation("view");
+		projLoc = lightingShader.getUniformLocation("projection");
+
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
+
+		glm::mat4 moon;
+		moon = orbit(moon, 1.0, 1.0, 0.35, timeValue * 1);
+		moon = orbit(moon, 30.0 * 6.3, 35.0 * 6.3, 0.35, timeValue * animate);
+
+		moon = glm::rotate(moon, (float)timeValue * 0.15f,
+			glm::vec3(0.7f, 1.0f, 0.0f));
+		moon = glm::scale(moon, glm::vec3(0.08, 0.08, 0.08));
+
+
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(moon));
+
+		textureMoon.bind(GL_TEXTURE0);
+
+		int segundaMoon = lightingShader.getUniformLocation("material.segunda");
+
+		glUniform1i(diffuseMapLoc, 5);
+		glUniform1i(ambientMapLoc, 0);
+		glUniform1i(specularMapLoc, 5);
+		glUniform1i(segundaMoon, 5);
 
 
 		sp2.render();
@@ -365,11 +408,11 @@ void applicationLoop() {
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 mercury;
-		mercury = glm::scale(mercury, glm::vec3(0.244, 0.244, 0.244));
-		mercury = orbit(mercury, 10.0, 15.0, 0.5, timeValue);
-		mercury = glm::translate(mercury, glm::vec3(57.9, 0.0, 0.0));
+		mercury = orbit(mercury, 10.0 * 6.0, 15.0 * 6.0, 0.5, timeValue * animate);
 		mercury = glm::rotate(mercury, (float)timeValue * 0.1f,
 			glm::vec3(0.0f, 1.0f, 0.0f));
+		mercury = glm::scale(mercury, glm::vec3(0.244, 0.244, 0.244));
+
 
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(mercury));
 
@@ -393,10 +436,11 @@ void applicationLoop() {
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 venus;
-		venus = glm::scale(venus, glm::vec3(0.5, 0.5, 0.5));
-		venus = orbit(venus, 20.0, 24.0, 0.42, timeValue);
+		venus = orbit(venus, 20.0 * 6.1, 24.0 * 6.1, 0.42 , timeValue * animate);
 		venus = glm::rotate(venus, (float)timeValue * 0.3f,
 			glm::vec3(0.03f, -1.0f, 0.0f));
+		venus = glm::scale(venus, glm::vec3(0.605, 0.605, 0.605));
+
 
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(venus));
 
@@ -406,7 +450,7 @@ void applicationLoop() {
 		ambientMapLoc = lightingShader.getUniformLocation("material.ambient");
 		int venusClouds = lightingShader.getUniformLocation("material.ambient");
 		glUniform1i(ambientMapLoc, 0);
-		glUniform1i(ambientMapLoc, 1);
+		glUniform1i(venusClouds, 1);
 
 
 		sp2.render();
@@ -425,10 +469,11 @@ void applicationLoop() {
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 earth;
-		earth = glm::scale(earth, glm::vec3(0.5, 0.5, 0.5));
-		earth = orbit(earth, 30.0, 35.0, 0.35, timeValue);
+		earth = orbit(earth, 30.0 * 6.2, 35.0 * 6.2, 0.35, timeValue * animate);
 		earth = glm::rotate(earth, (float)timeValue * 0.15f,
 			glm::vec3(0.7f, 1.0f, 0.0f));
+		earth = glm::scale(earth, glm::vec3(0.637, 0.637, 0.637));
+
 
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(earth));
 
@@ -453,6 +498,7 @@ void applicationLoop() {
 		lightingShader.turnOff();
 		/***********************************************************/
 
+
 		/******************** MARS ***********************************/
 		lightingShader.turnOn();
 
@@ -465,16 +511,22 @@ void applicationLoop() {
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 mars;
-		mars = glm::scale(mars, glm::vec3(0.5, 0.5, 0.5));
-		mars = orbit(mars, 42.0, 45.0, 0.3, timeValue);
+		mars = orbit(mars, 42.0 * 6.3, 45.0 * 6.3, 0.3, timeValue * animate);
 		mars = glm::rotate(mars, (float)timeValue * 0.1f,
 			glm::vec3(0.0f, 1.0f, 0.0f));
+		mars = glm::scale(mars, glm::vec3(0.339, 0.339, 0.339));
+
 
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(mars));
 
 		textureMars.bind(GL_TEXTURE0);
 		ambientMapLoc = lightingShader.getUniformLocation("material.ambient");
+
 		glUniform1i(ambientMapLoc, 0);
+		glUniform1i(diffuseMapLoc, 5);
+		glUniform1i(specularMapLoc, 5);
+		glUniform1i(clouds, 5);
+
 
 		sp2.render();
 		lightingShader.turnOff();
@@ -492,10 +544,11 @@ void applicationLoop() {
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 jupiter;
-		jupiter = glm::scale(jupiter, glm::vec3(0.5, 0.5, 0.5));
-		jupiter = orbit(jupiter, 50.5, 54.4, 0.27, timeValue);
+		jupiter = orbit(jupiter, 50.5 * 6.4, 54.4 * 6.4, 0.27, timeValue * animate);
 		jupiter = glm::rotate(jupiter, (float)timeValue * 0.15f,
 			glm::vec3(0.0f, 1.0f, 0.0f));
+		jupiter = glm::scale(jupiter, glm::vec3(7.15, 7.15, 7.15));
+
 
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(jupiter));
 
@@ -519,10 +572,11 @@ void applicationLoop() {
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 saturn;
-		saturn = glm::scale(saturn, glm::vec3(0.5, 0.5, 0.5));
-		saturn = orbit(saturn, 60.0, 63.8, 0.20, timeValue);
+		saturn = orbit(saturn, 60.0 * 6.5, 63.8 * 6.5 , 0.20, timeValue * animate);
 		saturn = glm::rotate(saturn, (float)timeValue * 0.4f,
 			glm::vec3(0.0f, 1.0f, 0.0f));
+		saturn = glm::scale(saturn, glm::vec3(6.02, 6.02, 6.02));
+
 
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(saturn));
 
@@ -547,10 +601,11 @@ void applicationLoop() {
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 uranus;
-		uranus = glm::scale(uranus, glm::vec3(0.5, 0.5, 0.5));
-		uranus = orbit(uranus, 70.0, 75.0, 0.15, timeValue);
+		uranus = orbit(uranus, 70.0 * 6.6, 75.0 * 6.6, 0.15, timeValue * animate);
 		uranus = glm::rotate(uranus, (float)timeValue * 0.3f,
 			glm::vec3(0.0f, 1.0f, 0.0f));
+		uranus = glm::scale(uranus, glm::vec3(5.11, 5.11, 5.11));
+
 
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(uranus));
 
@@ -574,16 +629,50 @@ void applicationLoop() {
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 neptune;
-		neptune = glm::scale(neptune, glm::vec3(0.5, 0.5, 0.5));
-		neptune = orbit(neptune, 80.5, 93.8, 0.1, timeValue);
+		neptune = orbit(neptune, 80.5 * 6.7, 93.8 * 6.7, 0.1, timeValue * animate);
 		neptune = glm::rotate(neptune, (float)timeValue * 0.1f,
 			glm::vec3(0.0f, 1.0f, 0.0f));
+		neptune = glm::scale(neptune, glm::vec3(4.95, 4.95, 4.95));
+
 
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(neptune));
 
 		textureNeptune.bind(GL_TEXTURE0);
 		ambientMapLoc = lightingShader.getUniformLocation("material.ambient");
 		glUniform1i(ambientMapLoc, 0);
+
+		sp2.render();
+		lightingShader.turnOff();
+		/***********************************************************/
+
+		/******************** PLUTO ***********************************/
+		lightingShader.turnOn();
+
+		// Get the uniform locations
+		modelLoc = lightingShader.getUniformLocation("model");
+		viewLoc = lightingShader.getUniformLocation("view");
+		projLoc = lightingShader.getUniformLocation("projection");
+
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
+
+		glm::mat4 pluto;
+		pluto = orbit(pluto, 80.5 * 6.9, 93.8 * 6.9, 0.1, timeValue * animate);
+		pluto = glm::rotate(pluto, (float)timeValue * 0.1f,
+			glm::vec3(0.0f, 1.0f, 0.0f));
+		pluto = glm::scale(pluto, glm::vec3(0.232, 0.232, 0.232));
+
+
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(pluto));
+
+		texturePluto.bind(GL_TEXTURE0);
+		texturePlutoSpec.bind(GL_TEXTURE1);
+
+		ambientMapLoc = lightingShader.getUniformLocation("material.ambient");
+		specularMapLoc = lightingShader.getUniformLocation("material.specular");
+
+		glUniform1i(ambientMapLoc, 0);
+		glUniform1i(specularMapLoc, 1);
 
 		sp2.render();
 		lightingShader.turnOff();
@@ -626,7 +715,7 @@ void applicationLoop() {
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 cubeModel;
-		cubeModel = glm::scale(cubeModel, glm::vec3(20.0f, 20.0f, 20.0f));
+		cubeModel = glm::scale(cubeModel, glm::vec3(200.0f, 200.0f, 200.0f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(cubeModel));
 
 		cubeMaptexture->Bind(GL_TEXTURE0);
