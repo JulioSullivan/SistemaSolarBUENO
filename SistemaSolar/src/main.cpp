@@ -321,7 +321,7 @@ void applicationLoop() {
 		glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
 
 		GLfloat timeValue = TimeManager::Instance().GetTime() - lastTime;
-		animate = 0;
+		animate = 1;
 
 
 		/******************** SUN ***********************************/
