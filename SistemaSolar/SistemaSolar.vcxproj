@@ -23,6 +23,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Headers\CameraFPS.h" />
+    <ClInclude Include="src\Headers\collision.h" />
     <ClInclude Include="src\Headers\CubemapTexture.h" />
     <ClInclude Include="src\Headers\definition.h" />
     <ClInclude Include="src\Headers\InputManager.h" />

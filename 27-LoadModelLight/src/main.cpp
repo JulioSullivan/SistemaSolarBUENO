@@ -115,7 +115,8 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	sp2.init();
 	sp2.load();
 
-	modelo1.loadModel("../objects/cyborg/cyborg.obj");
+	modelo1.loadModel("../objects/SistemaSolar/AlienSistemaSolar.dae");
+
 
 	lightingShader.initialize("../Shaders/loadModelLighting.vs", "../Shaders/loadModelLighting.fs");
 	lampShader.initialize("../Shaders/lampShader.vs", "../Shaders/lampShader.fs");
@@ -223,7 +224,7 @@ void applicationLoop() {
 
 		// Draw a sphere
 		glm::mat4 model;
-		model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
+		model = glm::scale(model, glm::vec3(0.1, 0.1, 0.1));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
 		//sp2.render();

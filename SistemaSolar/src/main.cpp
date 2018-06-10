@@ -27,6 +27,8 @@
 // Sphere include
 #include "Headers/Sphere.h"
 
+#include "Headers/collision.h"
+
 Sphere sp(1.5, 50, 50, MODEL_MODE::VERTEX_COLOR);
 Sphere sp2(1.5, 50, 50, MODEL_MODE::VERTEX_LIGHT_TEXTURE);
 
@@ -135,7 +137,7 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	}
 
 	glViewport(0, 0, screenWidth, screenHeight);
-	glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
 	// Enable test depth, must be clear depth buffer bit
 	glEnable(GL_DEPTH_TEST);
@@ -147,7 +149,7 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	sp2.init();
 	sp2.load();
 
-	modelo1.loadModel("../objects/cyborg/cyborg.obj");
+	modelo1.loadModel("../objects/SistemaSolar/AlienSistemaSolar.dae");
 
 	lightingShaderMix.initialize("../Shaders/loadModelLightingMix.vs", "../Shaders/loadModelLightingMix.fs");
 	lightingShader.initialize("../Shaders/loadModelLighting.vs", "../Shaders/loadModelLighting.fs");
@@ -277,6 +279,8 @@ void applicationLoop() {
 	glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
 	double lastTime = TimeManager::Instance().GetTime();
 
+	SBB planet_sbb[11];
+
 	while (psi) {
 		psi = processInput(true);
 		// This is new, need clear depth buffer bit
@@ -323,7 +327,6 @@ void applicationLoop() {
 		GLfloat timeValue = TimeManager::Instance().GetTime() - lastTime;
 		animate = 1;
 
-
 		/******************** SUN ***********************************/
 		// Get the uniform locations
 		GLint modelLoc = lightingShader.getUniformLocation("model");
@@ -354,6 +357,9 @@ void applicationLoop() {
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
+		//sbb para el sol
+		planet_sbb[0].center = glm::vec3(sun * glm::vec4(0, 0, 0, 1));
+		planet_sbb[0].ratio = 1.5 * 35.0;
 
 		sp2.render();
 		lightingShader.turnOff();
@@ -391,6 +397,9 @@ void applicationLoop() {
 		glUniform1i(specularMapLoc, 5);
 		glUniform1i(segundaMoon, 5);
 
+		//sbb para la luna
+		planet_sbb[1].center = glm::vec3(moon * glm::vec4(0, 0, 0, 1));
+		planet_sbb[1].ratio = 1.5 * 0.08;
 
 		sp2.render();
 		lightingShader.turnOff();
@@ -420,10 +429,14 @@ void applicationLoop() {
 		ambientMapLoc = lightingShader.getUniformLocation("material.ambient");
 		glUniform1i(ambientMapLoc, 0);
 
+		//sbb para mercurio
+		planet_sbb[2].center = glm::vec3(mercury * glm::vec4(0, 0, 0, 1));
+		planet_sbb[2].ratio = 1.5 * 0.244;
+
 		sp2.render();
 		lightingShader.turnOff();
 		/***********************************************************/
-
+				
 		/******************** Venus ***********************************/
 		lightingShader.turnOn();
 
@@ -436,7 +449,7 @@ void applicationLoop() {
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 venus;
-		venus = orbit(venus, 20.0 * 6.1, 24.0 * 6.1, 0.42 , timeValue * animate);
+		venus = orbit(venus, 20.0 * 6.1, 24.0 * 6.1, 0.42, timeValue * animate);
 		venus = glm::rotate(venus, (float)timeValue * 0.3f,
 			glm::vec3(0.03f, -1.0f, 0.0f));
 		venus = glm::scale(venus, glm::vec3(0.605, 0.605, 0.605));
@@ -452,6 +465,9 @@ void applicationLoop() {
 		glUniform1i(ambientMapLoc, 0);
 		glUniform1i(venusClouds, 1);
 
+		//sbb para venus
+		planet_sbb[3].center = glm::vec3(venus * glm::vec4(0, 0, 0, 1));
+		planet_sbb[3].ratio = 1.5 * 0.605;
 
 		sp2.render();
 		lightingShader.turnOff();
@@ -493,6 +509,9 @@ void applicationLoop() {
 		glUniform1i(specularMapLoc, 2);
 		glUniform1i(clouds, 3);
 
+		//sbb para la tierra
+		planet_sbb[4].center = glm::vec3(earth * glm::vec4(0, 0, 0, 1));
+		planet_sbb[4].ratio = 1.5 * 0.637;
 
 		sp2.render();
 		lightingShader.turnOff();
@@ -527,8 +546,13 @@ void applicationLoop() {
 		glUniform1i(specularMapLoc, 5);
 		glUniform1i(clouds, 5);
 
+		//sbb para marte
+		planet_sbb[5].center = glm::vec3(mars * glm::vec4(0, 0, 0, 1));
+		planet_sbb[5].ratio = 1.5 * 0.339;
 
 		sp2.render();
+
+
 		lightingShader.turnOff();
 		/***********************************************************/
 
@@ -556,7 +580,20 @@ void applicationLoop() {
 		ambientMapLoc = lightingShader.getUniformLocation("material.ambient");
 		glUniform1i(ambientMapLoc, 0);
 
+		//sbb para jupiter
+		planet_sbb[6].center = glm::vec3(jupiter * glm::vec4(0, 0, 0, 1));
+		planet_sbb[6].ratio = 1.5 * 7.15;
+
 		sp2.render();
+
+		glm::mat4 model1;
+		model1 = orbit(model1, 50.5 * 6.4, 54.4 * 6.4, 0.27, timeValue * animate);
+		model1 = glm::rotate(model1, (float)timeValue * 0.15f,
+			glm::vec3(0.0f, 1.0f, 0.0f));
+		model1 = glm::scale(model1, glm::vec3(0.16, 0.16, 0.16));
+		model1 = glm::translate(model1, glm::vec3(0.0, 68.0, 0.0));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model1));
+		modelo1.render(&lightingShader);
 		lightingShader.turnOff();
 		/***********************************************************/
 
@@ -583,6 +620,10 @@ void applicationLoop() {
 		textureSaturn.bind(GL_TEXTURE0);
 		ambientMapLoc = lightingShader.getUniformLocation("material.ambient");
 		glUniform1i(ambientMapLoc, 0);
+
+		//sbb para saturno
+		planet_sbb[7].center = glm::vec3(saturn * glm::vec4(0, 0, 0, 1));
+		planet_sbb[7].ratio = 1.5 * 6.02;
 
 		sp2.render();
 		lightingShader.turnOff();
@@ -613,6 +654,10 @@ void applicationLoop() {
 		ambientMapLoc = lightingShader.getUniformLocation("material.ambient");
 		glUniform1i(ambientMapLoc, 0);
 
+		//sbb para urano
+		planet_sbb[8].center = glm::vec3(uranus * glm::vec4(0, 0, 0, 1));
+		planet_sbb[8].ratio = 1.5 * 5.11;
+
 		sp2.render();
 		lightingShader.turnOff();
 		/***********************************************************/
@@ -641,6 +686,10 @@ void applicationLoop() {
 		ambientMapLoc = lightingShader.getUniformLocation("material.ambient");
 		glUniform1i(ambientMapLoc, 0);
 
+		//sbb para neptuno
+		planet_sbb[9].center = glm::vec3(neptune * glm::vec4(0, 0, 0, 1));
+		planet_sbb[9].ratio = 1.5 * 4.95;
+
 		sp2.render();
 		lightingShader.turnOff();
 		/***********************************************************/
@@ -657,7 +706,8 @@ void applicationLoop() {
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 pluto;
-		pluto = orbit(pluto, 80.5 * 6.9, 93.8 * 6.9, 0.1, timeValue * animate);
+		//pluto = orbit(pluto, 80.5 * 6.9, 93.8 * 6.9, 0.1, timeValue * animate);
+		pluto = orbit(pluto, 80.5 * 6.7, 93.8 * 6.7, 1.0, timeValue * animate);
 		pluto = glm::rotate(pluto, (float)timeValue * 0.1f,
 			glm::vec3(0.0f, 1.0f, 0.0f));
 		pluto = glm::scale(pluto, glm::vec3(0.232, 0.232, 0.232));
@@ -673,6 +723,10 @@ void applicationLoop() {
 
 		glUniform1i(ambientMapLoc, 0);
 		glUniform1i(specularMapLoc, 1);
+
+		//sbb para plutón
+		planet_sbb[10].center = glm::vec3(pluto * glm::vec4(0, 0, 0, 1));
+		planet_sbb[10].ratio = 1.5 * 0.232;
 
 		sp2.render();
 		lightingShader.turnOff();
@@ -693,7 +747,7 @@ void applicationLoop() {
 		light = glm::translate(glm::mat4(), lightPos);
 		light = glm::scale(light, glm::vec3(0.4, 0.4, 0.4));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(light));
-		sp.render();
+		//sp.render();
 		lampShader.turnOff();
 		/*************************************************************/
 
@@ -731,6 +785,12 @@ void applicationLoop() {
 		cubemapShader.turnOff();
 		/****************************************************************/
 
+		//Checar colisiones entre todos los planetas
+		for (int i = 0; i < 11; i++) {
+			for (int j = i + 1; j < 11; j++)
+				if (testSphereSphereIntersection(planet_sbb[i], planet_sbb[j]))
+					std::cout << "Model collision:" << i << " & " << j << std::endl;
+		}
 
 		/*********************** MODELO *********************************
 		envCubeShader.turnOn();
