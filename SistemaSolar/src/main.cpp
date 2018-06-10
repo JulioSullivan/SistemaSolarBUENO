@@ -74,7 +74,8 @@ bool animate = false;
 float rotationSpeed;
 float orbitSpeed;
 
-
+float tiempo = 0;
+float aumento = 0.0001;
 
 // Se definen todos las funciones.
 void reshapeCallback(GLFWwindow* Window, int widthRes, int heightRes);
@@ -208,12 +209,9 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
 		// Animating the planets Orbit around the sun
 		// and also their own individual rotation about their own axis
 		std::cout << "presionaste P" << std::endl;
-		if (animate == 0)
-			animate = 1;
-		else if (animate == 1)
-			animate = 0;
+		animate = !animate;
 	}
-	else if (key == GLFW_KEY_R && action == GLFW_PRESS)
+	if (key == GLFW_KEY_R && action == GLFW_PRESS)
 	{
 		// Randomize the Size / Orbit Speed Around  the Sun / Rotation Speed about their own axis
 		// of all the planet and the sun
@@ -231,8 +229,16 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
 		// Capping the rotation Speed at 300, minimum 100
 		rotationSpeed = (rand() % 200) + 100;
 
+		tiempo = 0;
 	}
 
+	if (key == GLFW_KEY_UP)
+		if (aumento < 0.007)
+			aumento += 0.0001;
+
+	if (key == GLFW_KEY_DOWN)
+		if (aumento > 0.0)
+			aumento -= 0.0001;
 }
 
 void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
@@ -280,7 +286,7 @@ void applicationLoop() {
 	double lastTime = TimeManager::Instance().GetTime();
 
 	SBB planet_sbb[11];
-
+	animate = true;
 	while (psi) {
 		psi = processInput(true);
 		// This is new, need clear depth buffer bit
@@ -325,7 +331,7 @@ void applicationLoop() {
 		glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
 
 		GLfloat timeValue = TimeManager::Instance().GetTime() - lastTime;
-		animate = 1;
+		
 
 		/******************** SUN ***********************************/
 		// Get the uniform locations
@@ -378,8 +384,8 @@ void applicationLoop() {
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 moon;
-		moon = orbit(moon, 1.0, 1.0, 0.35, timeValue * 1);
-		moon = orbit(moon, 30.0 * 6.3, 35.0 * 6.3, 0.35, timeValue * animate);
+		moon = orbit(moon, 3.0, 3.5, 0.4, tiempo*10);
+		moon = orbit(moon, 30.0 * 6.2, 35.0 * 6.2, 0.35, tiempo);
 
 		moon = glm::rotate(moon, (float)timeValue * 0.15f,
 			glm::vec3(0.7f, 1.0f, 0.0f));
@@ -417,7 +423,7 @@ void applicationLoop() {
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 mercury;
-		mercury = orbit(mercury, 10.0 * 6.0, 15.0 * 6.0, 0.5, timeValue * animate);
+		mercury = orbit(mercury, 10.0 * 6.0, 15.0 * 6.0, 0.5, tiempo);
 		mercury = glm::rotate(mercury, (float)timeValue * 0.1f,
 			glm::vec3(0.0f, 1.0f, 0.0f));
 		mercury = glm::scale(mercury, glm::vec3(0.244, 0.244, 0.244));
@@ -449,7 +455,7 @@ void applicationLoop() {
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 venus;
-		venus = orbit(venus, 20.0 * 6.1, 24.0 * 6.1, 0.42, timeValue * animate);
+		venus = orbit(venus, 20.0 * 6.1, 24.0 * 6.1, 0.42, tiempo);
 		venus = glm::rotate(venus, (float)timeValue * 0.3f,
 			glm::vec3(0.03f, -1.0f, 0.0f));
 		venus = glm::scale(venus, glm::vec3(0.605, 0.605, 0.605));
@@ -485,7 +491,7 @@ void applicationLoop() {
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 earth;
-		earth = orbit(earth, 30.0 * 6.2, 35.0 * 6.2, 0.35, timeValue * animate);
+		earth = orbit(earth, 30.0 * 6.2, 35.0 * 6.2, 0.35, tiempo);
 		earth = glm::rotate(earth, (float)timeValue * 0.15f,
 			glm::vec3(0.7f, 1.0f, 0.0f));
 		earth = glm::scale(earth, glm::vec3(0.637, 0.637, 0.637));
@@ -530,7 +536,7 @@ void applicationLoop() {
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 mars;
-		mars = orbit(mars, 42.0 * 6.3, 45.0 * 6.3, 0.3, timeValue * animate);
+		mars = orbit(mars, 42.0 * 6.3, 45.0 * 6.3, 0.3, tiempo);
 		mars = glm::rotate(mars, (float)timeValue * 0.1f,
 			glm::vec3(0.0f, 1.0f, 0.0f));
 		mars = glm::scale(mars, glm::vec3(0.339, 0.339, 0.339));
@@ -568,7 +574,7 @@ void applicationLoop() {
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 jupiter;
-		jupiter = orbit(jupiter, 50.5 * 6.4, 54.4 * 6.4, 0.27, timeValue * animate);
+		jupiter = orbit(jupiter, 50.5 * 6.4, 54.4 * 6.4, 0.27, tiempo);
 		jupiter = glm::rotate(jupiter, (float)timeValue * 0.15f,
 			glm::vec3(0.0f, 1.0f, 0.0f));
 		jupiter = glm::scale(jupiter, glm::vec3(7.15, 7.15, 7.15));
@@ -587,7 +593,7 @@ void applicationLoop() {
 		sp2.render();
 
 		glm::mat4 model1;
-		model1 = orbit(model1, 50.5 * 6.4, 54.4 * 6.4, 0.27, timeValue * animate);
+		model1 = orbit(model1, 50.5 * 6.4, 54.4 * 6.4, 0.27, tiempo);
 		model1 = glm::rotate(model1, (float)timeValue * 0.15f,
 			glm::vec3(0.0f, 1.0f, 0.0f));
 		model1 = glm::scale(model1, glm::vec3(0.16, 0.16, 0.16));
@@ -609,7 +615,7 @@ void applicationLoop() {
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 saturn;
-		saturn = orbit(saturn, 60.0 * 6.5, 63.8 * 6.5 , 0.20, timeValue * animate);
+		saturn = orbit(saturn, 60.0 * 6.5, 63.8 * 6.5 , 0.20, tiempo);
 		saturn = glm::rotate(saturn, (float)timeValue * 0.4f,
 			glm::vec3(0.0f, 1.0f, 0.0f));
 		saturn = glm::scale(saturn, glm::vec3(6.02, 6.02, 6.02));
@@ -642,7 +648,7 @@ void applicationLoop() {
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 uranus;
-		uranus = orbit(uranus, 70.0 * 6.6, 75.0 * 6.6, 0.15, timeValue * animate);
+		uranus = orbit(uranus, 70.0 * 6.6, 75.0 * 6.6, 0.15, tiempo);
 		uranus = glm::rotate(uranus, (float)timeValue * 0.3f,
 			glm::vec3(0.0f, 1.0f, 0.0f));
 		uranus = glm::scale(uranus, glm::vec3(5.11, 5.11, 5.11));
@@ -674,7 +680,7 @@ void applicationLoop() {
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 neptune;
-		neptune = orbit(neptune, 80.5 * 6.7, 93.8 * 6.7, 0.1, timeValue * animate);
+		neptune = orbit(neptune, 80.5 * 6.7, 93.8 * 6.7, 0.1, tiempo);
 		neptune = glm::rotate(neptune, (float)timeValue * 0.1f,
 			glm::vec3(0.0f, 1.0f, 0.0f));
 		neptune = glm::scale(neptune, glm::vec3(4.95, 4.95, 4.95));
@@ -706,8 +712,7 @@ void applicationLoop() {
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 pluto;
-		//pluto = orbit(pluto, 80.5 * 6.9, 93.8 * 6.9, 0.1, timeValue * animate);
-		pluto = orbit(pluto, 80.5 * 6.7, 93.8 * 6.7, 1.0, timeValue * animate);
+		pluto = orbit(pluto, 80.5 * 6.9, 93.8 * 6.9, 0.1, tiempo);
 		pluto = glm::rotate(pluto, (float)timeValue * 0.1f,
 			glm::vec3(0.0f, 1.0f, 0.0f));
 		pluto = glm::scale(pluto, glm::vec3(0.232, 0.232, 0.232));
@@ -784,6 +789,9 @@ void applicationLoop() {
 
 		cubemapShader.turnOff();
 		/****************************************************************/
+
+		if (animate)
+			tiempo += aumento;
 
 		//Checar colisiones entre todos los planetas
 		for (int i = 0; i < 11; i++) {
