@@ -38,7 +38,10 @@ Shader lampShader;
 Shader cubemapShader;
 Shader envCubeShader;
 
-Model modelo1;
+Model alien;
+Model starship;
+Model nanosuit;
+Model falcon;
 
 Texture textureDifuse(GL_TEXTURE_2D, "../Textures/container2.png");
 Texture textureSpecular(GL_TEXTURE_2D, "../Textures/container2_specular.png");
@@ -48,7 +51,6 @@ Texture textureClouds(GL_TEXTURE_2D, "../Textures/earth_clouds.jpg");
 Texture textureEarthSpec(GL_TEXTURE_2D, "../Textures/earth_specular.tif");
 Texture textureEarthDiff(GL_TEXTURE_2D, "../Textures/earth_nightmap.jpg");
 Texture textureMoon(GL_TEXTURE_2D, "../Textures/moon.jpg");
-
 Texture textureMercury(GL_TEXTURE_2D, "../Textures/mercury.jpg");
 Texture textureVenus(GL_TEXTURE_2D, "../Textures/venus_atmosphere.jpg");
 Texture textureVenusClouds(GL_TEXTURE_2D, "../Textures/venus_surface.jpg");
@@ -149,7 +151,10 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	sp2.init();
 	sp2.load();
 
-	modelo1.loadModel("../objects/SistemaSolar/AlienSistemaSolar.dae");
+	alien.loadModel("../objects/SistemaSolar/AlienSistemaSolar.dae");
+	starship.loadModel("../objects/Starship2/orbiter bugship.obj");
+	//falcon.loadModel("../objects/Starship3/millenium-falcon.obj");
+	nanosuit.loadModel("../objects/nanosuit/nanosuit.obj");
 
 	lightingShaderMix.initialize("../Shaders/loadModelLightingMix.vs", "../Shaders/loadModelLightingMix.fs");
 	lightingShader.initialize("../Shaders/loadModelLighting.vs", "../Shaders/loadModelLighting.fs");
@@ -280,6 +285,8 @@ void applicationLoop() {
 	double lastTime = TimeManager::Instance().GetTime();
 
 	SBB planet_sbb[11];
+	SBB sbbShip = getSBB(starship.getMeshes());
+
 
 	while (psi) {
 		psi = processInput(true);
@@ -325,7 +332,7 @@ void applicationLoop() {
 		glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
 
 		GLfloat timeValue = TimeManager::Instance().GetTime() - lastTime;
-		animate = 1;
+		animate = 0;
 
 		/******************** SUN ***********************************/
 		// Get the uniform locations
@@ -369,14 +376,6 @@ void applicationLoop() {
 		/******************** MOON ***********************************/
 		lightingShader.turnOn();
 
-		// Get the uniform locations
-		modelLoc = lightingShader.getUniformLocation("model");
-		viewLoc = lightingShader.getUniformLocation("view");
-		projLoc = lightingShader.getUniformLocation("projection");
-
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
-
 		glm::mat4 moon;
 		moon = orbit(moon, 1.0, 1.0, 0.35, timeValue * 1);
 		moon = orbit(moon, 30.0 * 6.3, 35.0 * 6.3, 0.35, timeValue * animate);
@@ -405,16 +404,44 @@ void applicationLoop() {
 		lightingShader.turnOff();
 		/***********************************************************/
 
-		/******************** MERCURY ***********************************/
+		/**********************  STARSHIP CAMERA *************************/
 		lightingShader.turnOn();
 
-		// Get the uniform locations
-		modelLoc = lightingShader.getUniformLocation("model");
-		viewLoc = lightingShader.getUniformLocation("view");
-		projLoc = lightingShader.getUniformLocation("projection");
+		glm::mat4 ship;
+		ship = glm::translate(ship, glm::vec3(inputManager.getCameraFPS()->Position.x, inputManager.getCameraFPS()->Position.y,
+			inputManager.getCameraFPS()->Position.z));
+		ship = glm::rotate(ship, 3.1416f , glm::vec3(0.0f, 1.0f, 0.0f));
+		ship = glm::rotate(ship, glm::radians(inputManager.getCameraFPS()->Yaw), glm::vec3(0.0f, -1.0f, 0.0f));
+		ship = glm::rotate(ship, glm::radians(inputManager.getCameraFPS()->Pitch), glm::vec3(0.0f, 0.0f, -1.0f));
+		ship = glm::translate(ship, glm::vec3(-1.0f, -0.5f, 0.0f));
+		//ship = glm::rotate(ship, glm::radians(inputManager.getCameraFPS()->Yaw), glm::vec3(0.0f, -1.0f, 0.0f));
+		ship = glm::rotate(ship, glm::radians(inputManager.getCameraFPS()->Pitch), glm::vec3(0.0f, 0.0f, -1.0f));
+		ship = glm::scale(ship, glm::vec3(0.001f, 0.001f, 0.001f));
 
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(ship));
+		starship.render(&lightingShader);
+
+		SBB sbbShipTest;
+		sbbShipTest.center = glm::vec3(ship * glm::vec4(0, 0, 0, 1));
+		sbbShipTest.ratio = sbbShip.ratio * 0.001f;
+
+		lightingShader.turnOff();
+		/***************************************************************/
+
+		/**********************  PREUBA *************************/
+		lightingShader.turnOn();
+
+		glm::mat4 model2;
+		model2 = glm::translate(model2, glm::vec3(3.0f, -4.0f, -1.0f));
+		model2 = glm::scale(model2, glm::vec3(0.8f, 0.8f, 0.8f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model2));
+		falcon.render(&lightingShader);
+
+		lightingShader.turnOff();
+		/***************************************************************/
+
+		/******************** MERCURY ***********************************/
+		lightingShader.turnOn();
 
 		glm::mat4 mercury;
 		mercury = orbit(mercury, 10.0 * 6.0, 15.0 * 6.0, 0.5, timeValue * animate);
@@ -439,14 +466,6 @@ void applicationLoop() {
 				
 		/******************** Venus ***********************************/
 		lightingShader.turnOn();
-
-		// Get the uniform locations
-		modelLoc = lightingShader.getUniformLocation("model");
-		viewLoc = lightingShader.getUniformLocation("view");
-		projLoc = lightingShader.getUniformLocation("projection");
-
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 venus;
 		venus = orbit(venus, 20.0 * 6.1, 24.0 * 6.1, 0.42, timeValue * animate);
@@ -476,13 +495,6 @@ void applicationLoop() {
 		/******************** EARTH ***********************************/
 		lightingShader.turnOn();
 
-		// Get the uniform locations
-		modelLoc = lightingShader.getUniformLocation("model");
-		viewLoc = lightingShader.getUniformLocation("view");
-		projLoc = lightingShader.getUniformLocation("projection");
-
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 earth;
 		earth = orbit(earth, 30.0 * 6.2, 35.0 * 6.2, 0.35, timeValue * animate);
@@ -521,13 +533,6 @@ void applicationLoop() {
 		/******************** MARS ***********************************/
 		lightingShader.turnOn();
 
-		// Get the uniform locations
-		modelLoc = lightingShader.getUniformLocation("model");
-		viewLoc = lightingShader.getUniformLocation("view");
-		projLoc = lightingShader.getUniformLocation("projection");
-
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 mars;
 		mars = orbit(mars, 42.0 * 6.3, 45.0 * 6.3, 0.3, timeValue * animate);
@@ -559,14 +564,6 @@ void applicationLoop() {
 		/******************** JUPITER ***********************************/
 		lightingShader.turnOn();
 
-		// Get the uniform locations
-		modelLoc = lightingShader.getUniformLocation("model");
-		viewLoc = lightingShader.getUniformLocation("view");
-		projLoc = lightingShader.getUniformLocation("projection");
-
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
-
 		glm::mat4 jupiter;
 		jupiter = orbit(jupiter, 50.5 * 6.4, 54.4 * 6.4, 0.27, timeValue * animate);
 		jupiter = glm::rotate(jupiter, (float)timeValue * 0.15f,
@@ -585,28 +582,23 @@ void applicationLoop() {
 		planet_sbb[6].ratio = 1.5 * 7.15;
 
 		sp2.render();
+		lightingShader.turnOff();
 
+		lightingShader.turnOn();
 		glm::mat4 model1;
 		model1 = orbit(model1, 50.5 * 6.4, 54.4 * 6.4, 0.27, timeValue * animate);
 		model1 = glm::rotate(model1, (float)timeValue * 0.15f,
 			glm::vec3(0.0f, 1.0f, 0.0f));
-		model1 = glm::scale(model1, glm::vec3(0.16, 0.16, 0.16));
+		model1 = glm::scale(model1, glm::vec3(0.8, 0.8, 0.8));
 		model1 = glm::translate(model1, glm::vec3(0.0, 68.0, 0.0));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model1));
-		modelo1.render(&lightingShader);
+		alien.render(&lightingShader);
 		lightingShader.turnOff();
 		/***********************************************************/
 
 		/******************** SATURN ***********************************/
 		lightingShader.turnOn();
 
-		// Get the uniform locations
-		modelLoc = lightingShader.getUniformLocation("model");
-		viewLoc = lightingShader.getUniformLocation("view");
-		projLoc = lightingShader.getUniformLocation("projection");
-
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 saturn;
 		saturn = orbit(saturn, 60.0 * 6.5, 63.8 * 6.5 , 0.20, timeValue * animate);
@@ -633,13 +625,6 @@ void applicationLoop() {
 		/******************** URANUS ***********************************/
 		lightingShader.turnOn();
 
-		// Get the uniform locations
-		modelLoc = lightingShader.getUniformLocation("model");
-		viewLoc = lightingShader.getUniformLocation("view");
-		projLoc = lightingShader.getUniformLocation("projection");
-
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 uranus;
 		uranus = orbit(uranus, 70.0 * 6.6, 75.0 * 6.6, 0.15, timeValue * animate);
@@ -665,14 +650,6 @@ void applicationLoop() {
 		/******************** NEPTUNE ***********************************/
 		lightingShader.turnOn();
 
-		// Get the uniform locations
-		modelLoc = lightingShader.getUniformLocation("model");
-		viewLoc = lightingShader.getUniformLocation("view");
-		projLoc = lightingShader.getUniformLocation("projection");
-
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
-
 		glm::mat4 neptune;
 		neptune = orbit(neptune, 80.5 * 6.7, 93.8 * 6.7, 0.1, timeValue * animate);
 		neptune = glm::rotate(neptune, (float)timeValue * 0.1f,
@@ -696,14 +673,6 @@ void applicationLoop() {
 
 		/******************** PLUTO ***********************************/
 		lightingShader.turnOn();
-
-		// Get the uniform locations
-		modelLoc = lightingShader.getUniformLocation("model");
-		viewLoc = lightingShader.getUniformLocation("view");
-		projLoc = lightingShader.getUniformLocation("projection");
-
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 pluto;
 		//pluto = orbit(pluto, 80.5 * 6.9, 93.8 * 6.9, 0.1, timeValue * animate);
@@ -735,13 +704,6 @@ void applicationLoop() {
 
 		/*************************** LIGHT *************************/
 		lampShader.turnOn();
-		// Create transformations
-		modelLoc = lampShader.getUniformLocation("model");
-		viewLoc = lampShader.getUniformLocation("view");
-		projLoc = lampShader.getUniformLocation("projection");
-		// Pass the matrices to the shader
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 light;
 		light = glm::translate(glm::mat4(), lightPos);
@@ -769,7 +731,7 @@ void applicationLoop() {
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		glm::mat4 cubeModel;
-		cubeModel = glm::scale(cubeModel, glm::vec3(200.0f, 200.0f, 200.0f));
+		cubeModel = glm::scale(cubeModel, glm::vec3(2000.0f, 2000.0f, 2000.0f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(cubeModel));
 
 		cubeMaptexture->Bind(GL_TEXTURE0);
@@ -785,31 +747,15 @@ void applicationLoop() {
 		cubemapShader.turnOff();
 		/****************************************************************/
 
+
 		//Checar colisiones entre todos los planetas
 		for (int i = 0; i < 11; i++) {
+			if (testSphereSphereIntersection(planet_sbb[i], sbbShipTest))
+				std::cout << "Model collision:" << i << " & Starship" << std::endl;
 			for (int j = i + 1; j < 11; j++)
 				if (testSphereSphereIntersection(planet_sbb[i], planet_sbb[j]))
-					std::cout << "Model collision:" << i << " & " << j << std::endl;
+					std::cout << "Planet collision:" << i << " & " << j << std::endl;
 		}
-
-		/*********************** MODELO *********************************
-		envCubeShader.turnOn();
-		view = inputManager.getCameraFPS()->GetViewMatrix();
-		viewLoc = envCubeShader.getUniformLocation("view");
-		projLoc = envCubeShader.getUniformLocation("projection");
-		modelLoc = envCubeShader.getUniformLocation("model");
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-		cubeMaptexture->Bind(GL_TEXTURE0);
-		cubeTextureId = envCubeShader.getUniformLocation("skybox");
-		glUniform1f(cubeTextureId, 0);
-		//viewPosLoc = envCubeShader.getUniformLocation("viewPos");
-		//glUniform3fv(viewPosLoc,1, glm::value_ptr(inputManager.getCameraFPS()->Position));
-		//sp2.render();
-		//modelo1.render(&envCubeShader);
-		envCubeShader.turnOff();
-		********************************************************************/
 		glfwSwapBuffers(window);
 	}
 }
@@ -820,3 +766,4 @@ int main(int argc, char ** argv) {
 	destroy();
 	return 1;
 }
+	

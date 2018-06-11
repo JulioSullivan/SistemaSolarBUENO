@@ -129,14 +129,14 @@ void Sphere::load() {
 	glEnableVertexAttribArray(0);
 	// Second attribute
 	if (mode == MODEL_MODE::VERTEX_LIGHT_TEXTURE)
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride,
-				(GLvoid*) offset2);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride,
+				(GLvoid*) offset3);
 	else
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride,
-				(GLvoid*) offset2);
+				(GLvoid*) offset3);
 	glEnableVertexAttribArray(1);
 	// Thrid attribute
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, stride, (GLvoid*) offset3);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (GLvoid*) offset2);
 	glEnableVertexAttribArray(2);
 
 	glBindVertexArray(0); // Unbind VAO
