@@ -38,6 +38,8 @@ Shader lampShader;
 Shader cubemapShader;
 Shader envCubeShader;
 
+Shader particleShader;
+
 Model alien;
 Model starship;
 Model nanosuit;
@@ -61,6 +63,8 @@ Texture textureUranus(GL_TEXTURE_2D, "../Textures/uranus.jpg");
 Texture textureNeptune(GL_TEXTURE_2D, "../Textures/neptune.jpg");
 Texture texturePluto(GL_TEXTURE_2D, "../Textures/plutomap.jpg");
 Texture texturePlutoSpec(GL_TEXTURE_2D, "../Textures/plutobump.jpg");
+Texture textureMeteor(GL_TEXTURE_2D, "../Textures/meteor.jpg");
+Texture textureMeteorSpec(GL_TEXTURE_2D, "../Textures/meteorSpecular.jpg");
 
 CubemapTexture * cubeMaptexture = new CubemapTexture("../Textures/ame_nebula", "purplenebula_ft.tga", "purplenebula_bk.tga", "purplenebula_up.tga", "purplenebula_dn.tga", "purplenebula_rt.tga", "purplenebula_lf.tga");
 
@@ -78,6 +82,10 @@ float orbitSpeed;
 
 float tiempo = 0;
 float aumento = 0.0001;
+
+//Para el meteorito
+glm::vec3 posicion;
+float tamaño, velocidad, rad1, rad2;
 
 // Se definen todos las funciones.
 void reshapeCallback(GLFWwindow* Window, int widthRes, int heightRes);
@@ -180,7 +188,10 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	textureNeptune.load();
 	texturePluto.load();
 	texturePlutoSpec.load();
+	textureMeteor.load();
+	textureMeteorSpec.load();
 
+	particleShader.initialize("../Shaders/particle.vs", "../Shaders/particle.fs");
 
 	cubeMaptexture->Load();
 
@@ -245,6 +256,19 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
 	if (key == GLFW_KEY_DOWN)
 		if (aumento > 0.0)
 			aumento -= 0.0001;
+
+	if (key == GLFW_KEY_O && action == GLFW_PRESS) {
+		//Obtener la posicion donde se insertará el meteorito
+		posicion = glm::vec3(inputManager.getCameraFPS()->Position.x,
+			0.0, inputManager.getCameraFPS()->Position.z);
+		//Obtener un tamaño aleatorio entre 0.25 y 1.25
+		tamaño = ((rand() % 1000) + 250);
+		tamaño /= 1000;
+		velocidad = ((rand() % 100) + 50);
+		velocidad /= 100;
+		rad1 = ((rand() % 490) + 60);
+		rad2 = ((rand() % 100) + 10);
+	}
 }
 
 void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
@@ -591,16 +615,16 @@ void applicationLoop() {
 		planet_sbb[6].ratio = 1.5 * 7.15;
 
 		sp2.render();
-		lightingShader.turnOff();
+		//lightingShader.turnOff();
 
 		glm::mat4 model1;
 		model1 = orbit(model1, 50.5 * 6.4, 54.4 * 6.4, 0.27, tiempo);
 		model1 = glm::rotate(model1, (float)timeValue * 0.15f,
 			glm::vec3(0.0f, 1.0f, 0.0f));
 		model1 = glm::scale(model1, glm::vec3(0.8, 0.8, 0.8));
-		model1 = glm::translate(model1, glm::vec3(0.0, 68.0, 0.0));
+		model1 = glm::translate(model1, glm::vec3(0.0, 13.0, 0.0));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model1));
-		modelo1.render(&lightingShader);
+		alien.render(&lightingShader);
 		lightingShader.turnOff();
 		/***********************************************************/
 
@@ -709,6 +733,51 @@ void applicationLoop() {
 		/***********************************************************/
 
 
+		/******************** METEORITE *********************************/
+		lightingShader.turnOn();
+		glm::mat4 meteor;
+		
+		meteor = orbit(meteor, rad1, rad2, velocidad, tiempo);
+		meteor = glm::translate(meteor, posicion);
+		meteor = glm::rotate(meteor, tiempo, glm::vec3(0.0f, 1.0f, 0.0f));
+		meteor = glm::rotate(meteor, (float) glm::radians(-90.0),
+			glm::vec3(0.0f, 0.0f, 1.0f));
+		meteor = glm::scale(meteor, glm::vec3(tamaño, tamaño, tamaño));
+
+
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(meteor));
+
+		textureMeteor.bind(GL_TEXTURE0);
+		textureMeteorSpec.bind(GL_TEXTURE1);
+		ambientMapLoc = lightingShader.getUniformLocation("material.ambient");
+		specularMapLoc = lightingShader.getUniformLocation("material.specular");
+
+		glUniform1i(ambientMapLoc, 0);
+		glUniform1i(specularMapLoc, 5);
+
+		//sbb para meteoro
+		SBB sbbMeteor;
+		sbbMeteor.center = glm::vec3(meteor * glm::vec4(0, 0, 0, 1));
+		sbbMeteor.ratio = 1.5 * tamaño;
+
+		sp2.render();
+
+
+		lightingShader.turnOff();
+		/***********************************************************/
+
+		glGenVertexArrays(1, &VAO);
+		glBindVertexArray(VAO);
+		particleShader.turnOn();
+		GLint modViewProjLoc = particleShader.getUniformLocation("MVP");
+		GLint timeLoc = particleShader.getUniformLocation("time");
+		glUniform1f(timeLoc, timeValue);
+		glUniformMatrix4fv(modViewProjLoc, 1, GL_FALSE, glm::value_ptr(projection*model*view*meteor));
+		glDrawArrays(GL_POINTS, 0, 1000);
+
+		particleShader.turnOff();
+
+
 		/*************************** LIGHT *************************/
 		lampShader.turnOn();
 
@@ -754,6 +823,7 @@ void applicationLoop() {
 		cubemapShader.turnOff();
 		/****************************************************************/
 
+		
 		if (animate)
 			tiempo += aumento;
 
@@ -761,6 +831,8 @@ void applicationLoop() {
 		for (int i = 0; i < 11; i++) {
 			if (testSphereSphereIntersection(planet_sbb[i], sbbShipTest))
 				std::cout << "Model collision:" << i << " & Starship" << std::endl;
+			if (testSphereSphereIntersection(planet_sbb[i], sbbMeteor))
+				std::cout << "Model collision:" << i << " & Meteor" << std::endl;
 			for (int j = i + 1; j < 11; j++)
 				if (testSphereSphereIntersection(planet_sbb[i], planet_sbb[j]))
 					std::cout << "Planet collision:" << i << " & " << j << std::endl;
