@@ -1,0 +1,19 @@
+﻿  TEXTURE.cpp
+c:\users\jessy5\documents\visual studio 2017\projects\sistemasolarbueno\animacionpersonaje\opengl.h(6): fatal error C1083: No se puede abrir el archivo incluir: 'GL\glext.h': No such file or directory
+  SYSTEM.cpp
+c:\users\jessy5\documents\visual studio 2017\projects\sistemasolarbueno\animacionpersonaje\opengl.h(6): fatal error C1083: No se puede abrir el archivo incluir: 'GL\glext.h': No such file or directory
+  SHADER.cpp
+c:\users\jessy5\documents\visual studio 2017\projects\sistemasolarbueno\animacionpersonaje\opengl.h(6): fatal error C1083: No se puede abrir el archivo incluir: 'GL\glext.h': No such file or directory
+  OPENGL.cpp
+c:\users\jessy5\documents\visual studio 2017\projects\sistemasolarbueno\animacionpersonaje\opengl.h(6): fatal error C1083: No se puede abrir el archivo incluir: 'GL\glext.h': No such file or directory
+  MD5MODEL.cpp
+c:\users\jessy5\documents\visual studio 2017\projects\sistemasolarbueno\animacionpersonaje\opengl.h(6): fatal error C1083: No se puede abrir el archivo incluir: 'GL\glext.h': No such file or directory
+  MD5ANIM.cpp
+c:\users\jessy5\documents\visual studio 2017\projects\sistemasolarbueno\animacionpersonaje\md5anim.cpp(75): warning C4244: 'inicializando': conversión de 'std::streamoff' a 'int'; posible pérdida de datos
+c:\users\jessy5\documents\visual studio 2017\projects\sistemasolarbueno\animacionpersonaje\md5anim.cpp(77): warning C4244: 'inicializando': conversión de 'std::streamoff' a 'int'; posible pérdida de datos
+  MAIN.cpp
+c:\users\jessy5\documents\visual studio 2017\projects\sistemasolarbueno\animacionpersonaje\opengl.h(6): fatal error C1083: No se puede abrir el archivo incluir: 'GL\glext.h': No such file or directory
+  INPUT.cpp
+  GRAPHICS.cpp
+c:\users\jessy5\documents\visual studio 2017\projects\sistemasolarbueno\animacionpersonaje\opengl.h(6): fatal error C1083: No se puede abrir el archivo incluir: 'GL\glext.h': No such file or directory
+  Generando código...
