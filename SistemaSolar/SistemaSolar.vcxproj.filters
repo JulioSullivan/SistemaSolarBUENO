@@ -115,5 +115,11 @@
     <None Include="..\Shaders\model.vs">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="..\Shaders\particle.fs">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="..\Shaders\particle.vs">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

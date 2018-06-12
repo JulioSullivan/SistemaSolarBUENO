@@ -47,6 +47,8 @@
     <None Include="..\Shaders\loadModelLightingMix.vs" />
     <None Include="..\Shaders\model.fs" />
     <None Include="..\Shaders\model.vs" />
+    <None Include="..\Shaders\particle.fs" />
+    <None Include="..\Shaders\particle.vs" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{ef7f6fb5-8f2e-4ab4-9360-8a4b7d4f1959}</ProjectGuid>

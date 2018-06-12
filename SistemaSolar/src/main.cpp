@@ -43,10 +43,13 @@ Shader lampShader;
 Shader cubemapShader;
 Shader envCubeShader;
 
+Shader particleShader;
+
 Model alien;
 Model starship;
 Model nanosuit;
 Model falcon;
+Model anillos;
 Model satellite;
 Model interestellar;
 Model astronauta;
@@ -69,6 +72,8 @@ Texture textureUranus(GL_TEXTURE_2D, "../Textures/uranus.jpg");
 Texture textureNeptune(GL_TEXTURE_2D, "../Textures/neptune.jpg");
 Texture texturePluto(GL_TEXTURE_2D, "../Textures/plutomap.jpg");
 Texture texturePlutoSpec(GL_TEXTURE_2D, "../Textures/plutobump.jpg");
+Texture textureMeteor(GL_TEXTURE_2D, "../Textures/meteor.jpg");
+Texture textureMeteorSpec(GL_TEXTURE_2D, "../Textures/meteorSpecular.jpg");
 
 CubemapTexture * cubeMaptexture = new CubemapTexture("../Textures/ame_nebula", "purplenebula_ft.tga", "purplenebula_bk.tga", "purplenebula_up.tga", "purplenebula_dn.tga", "purplenebula_rt.tga", "purplenebula_lf.tga");
 
@@ -87,6 +92,12 @@ float orbitSpeed;
 float tiempo = 0;
 float aumento = 0.0001;
 
+//Para el meteorito
+glm::vec3 posicion = glm::vec3(0.0, 100.0, 0.0);
+float tamaño, velocidad, rad1, rad2;
+bool choque = false;
+float last_t;
+float n_tam = 0.0;
 
 // OpenAL config
 ALfloat listenerPos[] = { 0.0, 0.0, 4.0 };
@@ -247,7 +258,9 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 
 	alien.loadModel("../objects/SistemaSolar/AlienSistemaSolar.dae");
 
+	anillos.loadModel("../objects/anillos/anillos.dae");
 	starship.loadModel("../objects/Starship2/orbiter bugship.obj");
+
 	falcon.loadModel("../objects/Falcon/Millennium_Falcon.obj");
 	nanosuit.loadModel("../objects/nanosuit/nanosuit.obj");
 	satellite.loadModel("../objects/Satellite/UHFSatcom.obj");
@@ -276,7 +289,10 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	textureNeptune.load();
 	texturePluto.load();
 	texturePlutoSpec.load();
+	textureMeteor.load();
+	textureMeteorSpec.load();
 
+	particleShader.initialize("../Shaders/particle.vs", "../Shaders/particle.fs");
 
 	cubeMaptexture->Load();
 
@@ -341,6 +357,21 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
 	if (key == GLFW_KEY_DOWN)
 		if (aumento > 0.0)
 			aumento -= 0.0001;
+
+	if (key == GLFW_KEY_O && action == GLFW_PRESS) {
+		//Obtener la posicion donde se insertará el meteorito
+		posicion = glm::vec3(inputManager.getCameraFPS()->Position.x,
+			0.0, inputManager.getCameraFPS()->Position.z);
+		//Obtener un tamaño aleatorio entre 0.25 y 1.25
+		tamaño = ((rand() % 2000) + 250);
+		tamaño /= 1000;
+		velocidad = ((rand() % 100) + 50);
+		velocidad /= 100;
+		rad1 = ((rand() % 490) + 100);
+		rad2 = ((rand() % 200) + 10);
+		choque = false;
+		n_tam = 0.0;
+	}
 }
 
 void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
@@ -373,8 +404,6 @@ glm::mat4 orbit(glm::mat4 matriz, float radio1, float radio2, float velocidad, f
 	*/
 	return glm::translate(matriz, glm::vec3(cos(t*velocidad)*radio1, 0.0f, sin(t*velocidad)*radio2));
 }
-
-
 double lastUpdateTime = glfwGetTime(); // last update time
 double elapsedTime = lastUpdateTime;   // time elapsed since last update
 double frameTime = 0.0f;            // frame time
@@ -438,9 +467,8 @@ void applicationLoop() {
 		glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
 
 		GLfloat timeValue = TimeManager::Instance().GetTime() - lastTime;
-
-
-		/******************** SUN ***********************************/
+		
+		/******************** SUN **********************************/
 		// Get the uniform locations
 		GLint modelLoc = lightingShader.getUniformLocation("model");
 		GLint viewLoc = lightingShader.getUniformLocation("view");
@@ -485,6 +513,7 @@ void applicationLoop() {
 
 		glm::mat4 moon;
 
+
 		moon = orbit(moon, 3.0, 3.5, 0.4, tiempo * 10);
 		moon = orbit(moon, 30.0 * 6.2, 35.0 * 6.2, 0.35, tiempo);
 
@@ -525,10 +554,6 @@ void applicationLoop() {
 
 		lightingShader.turnOff();
 		/***************************************************************/
-
-
-
-
 		/********************** GIRA *************************/
 		lightingShader.turnOn();
 
@@ -550,6 +575,7 @@ void applicationLoop() {
 		/**********************  STARSHIP CAMERA *************************/
 		lightingShader.turnOn();
 
+		glm::mat4 ship;
 		glm::mat4 falconM;
 		//ship = glm::translate(ship, glm::vec3(0.0, 0.0, 0.0));
 		falconM = glm::translate(falconM, glm::vec3(inputManager.getCameraFPS()->Position.x, inputManager.getCameraFPS()->Position.y, inputManager.getCameraFPS()->Position.z));
@@ -561,6 +587,7 @@ void applicationLoop() {
 		falconM = glm::rotate(falconM, glm::radians(inputManager.getCameraFPS()->Pitch), glm::vec3(-1.0f, 0.0f, 0.0f));
 		falconM = glm::scale(falconM, glm::vec3(0.001f, 0.001f, 0.001f));
 
+
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(falconM));
 		falcon.render(&lightingShader);
 
@@ -571,15 +598,18 @@ void applicationLoop() {
 		lightingShader.turnOff();
 		/***************************************************************/
 
+
 		/********************** FLYING SHIP LAMNISCATA *************************/
 		lightingShader.turnOn();
 
 		glm::mat4 model2;
+
 		model2 = glm::translate(model2, glm::vec3(40.0, 70.0, 40.0));
 		model2 = glm::translate(model2, glm::vec3((300 * cos(tiempo)) / (glm::exp2(sin(tiempo) + 1)), 30.0, (300 * glm::sqrt(2) * cos(tiempo) * sin(tiempo)) / (glm::exp2(sin(tiempo)))));
 		model2 = glm::rotate(model2, glm::radians(tiempo * 200), glm::vec3(0.0, 1.0, 0.0));
 		model2 = glm::scale(model2, glm::vec3(0.05f, 0.05f, 0.05f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model2));
+
 		starship.render(&lightingShader);
 
 		SBB sbbShipTest;
@@ -746,7 +776,137 @@ void applicationLoop() {
 		astronauta.render(&lightingShader);
 
 		lightingShader.turnOff();
-		/***************************************************************/
+
+
+		/******************** MOON IO ***********************************/
+		lightingShader.turnOn();
+
+
+		glm::mat4 moon1;
+
+		moon1 = orbit(moon1, 15.0, 15.5, 0.3, tiempo * 10);
+		moon1 = orbit(moon1, 50.0 * 6.4, 54.4 * 6.4, 0.27, tiempo);
+
+		moon1 = glm::rotate(moon1, (float)timeValue * 0.15f,
+			glm::vec3(0.0f, 1.0f, 0.0f));
+		moon1 = glm::scale(moon1, glm::vec3(0.12, 0.12, 0.12));
+
+
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(moon1));
+
+		textureMoon.bind(GL_TEXTURE0);
+
+		int IOMoon = lightingShader.getUniformLocation("material.segunda");
+
+		glUniform1i(diffuseMapLoc, 5);
+		glUniform1i(ambientMapLoc, 0);
+		glUniform1i(specularMapLoc, 5);
+		glUniform1i(segundaMoon, 5);
+
+		//sbb para la luna
+		planet_sbb[1].center = glm::vec3(moon1 * glm::vec4(0, 0, 0, 1));
+		planet_sbb[1].ratio = 1.5 * 0.08;
+
+		sp2.render();
+		lightingShader.turnOff();
+
+		/******************** MOON Europa ***********************************/
+		lightingShader.turnOn();
+
+
+		glm::mat4 moon2;
+
+		moon2 = orbit(moon2, -17.0, 17.5, 0.3, tiempo * 10);
+		moon2 = orbit(moon2, 51.0 * 6.4, 54.4 * 6.4, 0.27, tiempo);
+		moon2 = glm::translate(moon2, glm::vec3(0.0f, 2.0f, 0.0f));
+		moon2 = glm::rotate(moon2, (float)timeValue * 0.15f,
+			glm::vec3(0.0f, 1.0f, 0.0f));
+		moon2 = glm::scale(moon2, glm::vec3(0.19, 0.19, 0.19));
+
+
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(moon2));
+
+		textureMoon.bind(GL_TEXTURE0);
+
+		int EuropaMoon = lightingShader.getUniformLocation("material.segunda");
+
+		glUniform1i(diffuseMapLoc, 5);
+		glUniform1i(ambientMapLoc, 0);
+		glUniform1i(specularMapLoc, 5);
+		glUniform1i(segundaMoon, 5);
+
+		//sbb para la luna
+		planet_sbb[1].center = glm::vec3(moon2 * glm::vec4(0, 0, 0, 1));
+		planet_sbb[1].ratio = 1.5 * 0.08;
+
+		sp2.render();
+		lightingShader.turnOff();
+
+		/******************** MOON Ganymede ***********************************/
+		lightingShader.turnOn();
+
+
+		glm::mat4 moon3;
+
+		moon3 = orbit(moon3, -18.0, 18.5, 0.53, tiempo * 10);
+		moon3 = orbit(moon3, 50.2 * 6.4, 54.4 * 6.4, 0.27, tiempo);
+		moon3 = glm::translate(moon3, glm::vec3(0.0f, 3.5f, 0.0f));
+		moon3 = glm::rotate(moon3, (float)timeValue * 0.15f,
+			glm::vec3(0.0f, 1.0f, 0.0f));
+		moon3 = glm::scale(moon3, glm::vec3(0.25, 0.25, 0.25));
+
+
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(moon3));
+
+		textureMoon.bind(GL_TEXTURE0);
+
+		int GanymedeMoon = lightingShader.getUniformLocation("material.segunda");
+
+		glUniform1i(diffuseMapLoc, 5);
+		glUniform1i(ambientMapLoc, 0);
+		glUniform1i(specularMapLoc, 5);
+		glUniform1i(segundaMoon, 5);
+
+		//sbb para la luna
+		planet_sbb[1].center = glm::vec3(moon3 * glm::vec4(0, 0, 0, 1));
+		planet_sbb[1].ratio = 1.5 * 0.08;
+
+		sp2.render();
+		lightingShader.turnOff();
+
+		/******************** MOON Callisto ***********************************/
+		lightingShader.turnOn();
+
+
+		glm::mat4 moon4;
+
+		moon4 = orbit(moon4, 18.5, 19.0, 0.3, tiempo * 10);
+		moon4 = orbit(moon4, 51.5 * 6.4, 54.4 * 6.4, 0.27, tiempo);
+		moon4 = glm::translate(moon4, glm::vec3(0.0f, -4.0f, 0.0f));
+		moon4 = glm::rotate(moon4, (float)timeValue * 0.15f,
+			glm::vec3(0.0f, 1.0f, 0.0f));
+		moon4 = glm::scale(moon4, glm::vec3(0.2, 0.2, 0.2));
+
+
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(moon4));
+
+		textureMoon.bind(GL_TEXTURE0);
+
+		int CallistoMoon = lightingShader.getUniformLocation("material.segunda");
+
+		glUniform1i(diffuseMapLoc, 5);
+		glUniform1i(ambientMapLoc, 0);
+		glUniform1i(specularMapLoc, 5);
+		glUniform1i(CallistoMoon, 5);
+
+		//sbb para la luna
+		planet_sbb[1].center = glm::vec3(moon4 * glm::vec4(0, 0, 0, 1));
+		planet_sbb[1].ratio = 1.5 * 0.08;
+
+		sp2.render();
+		lightingShader.turnOff();
+
+		/***********************************************************/
 
 		/******************** SATURN ***********************************/
 		lightingShader.turnOn();
@@ -770,6 +930,21 @@ void applicationLoop() {
 		planet_sbb[7].ratio = 1.5 * 6.02;
 
 		sp2.render();
+
+		//anillos girando al rededor del planeta
+		glm::mat4 modelA;
+		modelA = orbit(modelA, 60.0 * 6.5, 63.8 * 6.5, 0.20, tiempo);
+		modelA = glm::rotate(modelA, (float)timeValue * 0.4f,
+			glm::vec3(0.0f, 1.0f, 0.0f));
+		modelA = glm::scale(modelA, glm::vec3(7.8, 7.8, 7.8));
+		modelA = glm::rotate(modelA, 90.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+		modelA = glm::translate(modelA, glm::vec3(0.0, 0.0, 0.0));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(modelA));
+		anillos.render(&lightingShader);
+		lightingShader.turnOff();
+
+
+
 		lightingShader.turnOff();
 		/***********************************************************/
 
@@ -853,6 +1028,66 @@ void applicationLoop() {
 		/***********************************************************/
 
 
+		/******************** METEORITE *********************************/
+		lightingShader.turnOn();
+		glm::mat4 meteor;
+		glm::mat4 particulas;
+
+		if (choque)
+			meteor = orbit(meteor, rad1, rad2, velocidad, last_t);
+		else
+			meteor = orbit(meteor, rad1, rad2, velocidad, tiempo);
+		meteor = glm::translate(meteor, posicion);
+		meteor = glm::rotate(meteor, (float)glm::radians(-90.0),
+			glm::vec3(0.0f, 0.0f, 1.0f));
+		meteor = glm::scale(meteor, glm::vec3(tamaño, tamaño, tamaño));
+
+		if(tamaño > 0.0 && animate)
+			tamaño += n_tam;
+		particulas = meteor;
+		
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(meteor));
+
+		textureMeteor.bind(GL_TEXTURE0);
+		textureMeteorSpec.bind(GL_TEXTURE1);
+		ambientMapLoc = lightingShader.getUniformLocation("material.ambient");
+		specularMapLoc = lightingShader.getUniformLocation("material.specular");
+
+		glUniform1i(ambientMapLoc, 0);
+		glUniform1i(specularMapLoc, 5);
+
+		//sbb para meteoro
+		SBB sbbMeteor;
+		sbbMeteor.center = glm::vec3(meteor * glm::vec4(0, 0, 0, 1));
+		sbbMeteor.ratio = 1.5 * tamaño;
+
+		sp2.render();
+
+
+		lightingShader.turnOff();
+		/***********************************************************/
+
+		glGenVertexArrays(1, &VAO);
+		glBindVertexArray(VAO);
+		
+		particleShader.turnOn();
+		GLint modViewProjLoc = particleShader.getUniformLocation("MVP");
+		GLint timeLoc = particleShader.getUniformLocation("time");
+		glUniform1f(timeLoc, timeValue);
+		if (choque) {
+			particulas = glm::rotate(meteor, tiempo * 100, glm::vec3(0.0f, 0.0f, 1.0f));
+			n_tam = -0.001;
+			glUniformMatrix4fv(modViewProjLoc, 1, GL_FALSE, glm::value_ptr(projection*model*view*particulas));
+			glDrawArrays(GL_POINTS, 0, 10000);
+		}
+		else {
+			glUniformMatrix4fv(modViewProjLoc, 1, GL_FALSE, glm::value_ptr(projection*model*view*meteor));
+			glDrawArrays(GL_POINTS, 0, 10000);
+		}
+
+		particleShader.turnOff();
+
+
 		/*************************** LIGHT *************************/
 		lampShader.turnOn();
 
@@ -895,7 +1130,7 @@ void applicationLoop() {
 		glCullFace(GL_FRONT);
 		glDepthFunc(GL_LEQUAL);
 		sp2.render();
-		sp.render();
+
 		glCullFace(oldCullFaceMode);
 		glDepthFunc(oldDepthFuncMode);
 
@@ -977,6 +1212,16 @@ void applicationLoop() {
 			for (int j = i + 1; j < 11; j++)
 				if (testSphereSphereIntersection(planet_sbb[i], planet_sbb[j]))
 					std::cout << "Planet collision:" << i << " & " << j << std::endl;
+		}
+		//Colision entre meteoro y planetas
+		if(!choque)
+		for (int i = 0; i < 11; i++) {
+			if (testSphereSphereIntersection(planet_sbb[i], sbbMeteor)) {
+				choque = true;
+				last_t = tiempo;
+				std::cout << "Model collision:" << i << " & Meteor" << std::endl;
+				break;
+			}
 		}
 
 		glfwSwapBuffers(window);
