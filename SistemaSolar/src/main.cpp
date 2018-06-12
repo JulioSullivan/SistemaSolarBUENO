@@ -218,7 +218,7 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	alGenBuffers(NUM_BUFFERS, buffer);
 
 	//buffer[0] = alutCreateBufferFromFile("../sounds/05 He Who Walks With Wolves.wav");
-	buffer[0] = alutCreateBufferFromFile("../sounds/lawyer1.wav");
+	buffer[0] = alutCreateBufferFromFile("../sounds/swtheme.wav");
 	//buffer[0] = alutCreateBufferHelloWorld();
 
 	alGetError(); /* clear error */
