@@ -1,3 +1,5 @@
+// OpenAL include
+#include <AL/alut.h>
 
 //glew include
 #include <GL/glew.h>
@@ -26,8 +28,11 @@
 
 // Sphere include
 #include "Headers/Sphere.h"
-
 #include "Headers/collision.h"
+
+#define NUM_BUFFERS 3
+#define NUM_SOURCES 3
+#define NUM_ENVIRONMENTS 1
 
 Sphere sp(1.5, 50, 50, MODEL_MODE::VERTEX_COLOR);
 Sphere sp2(1.5, 50, 50, MODEL_MODE::VERTEX_LIGHT_TEXTURE);
@@ -42,6 +47,9 @@ Model alien;
 Model starship;
 Model nanosuit;
 Model falcon;
+Model satellite;
+Model interestellar;
+Model astronauta;
 
 Texture textureDifuse(GL_TEXTURE_2D, "../Textures/container2.png");
 Texture textureSpecular(GL_TEXTURE_2D, "../Textures/container2_specular.png");
@@ -78,6 +86,32 @@ float orbitSpeed;
 
 float tiempo = 0;
 float aumento = 0.0001;
+
+
+// OpenAL config
+ALfloat listenerPos[] = { 0.0, 0.0, 4.0 };
+ALfloat listenerVel[] = { 0.0, 0.0, 0.0 };
+ALfloat listenerOri[] = { 0.0, 0.0, 1.0, 0.0, 1.0, 0.0 };
+
+ALfloat source0Pos[] = { -2.0, 0.0, 0.0 };
+ALfloat source0Vel[] = { 0.0, 0.0, 0.0 };
+
+ALfloat source1Pos[] = { 2.0, 0.0, 0.0 };
+ALfloat source1Vel[] = { 0.0, 0.0, 0.0 };
+
+ALfloat source2Pos[] = { 0.0, 0.0, -4.0 };
+ALfloat source2Vel[] = { 0.0, 0.0, 0.0 };
+
+ALuint buffer[NUM_BUFFERS];
+ALuint source[NUM_SOURCES];
+ALuint environment[NUM_ENVIRONMENTS];
+
+ALsizei size, freq;
+ALenum format;
+ALvoid *data;
+int ch;
+ALboolean loop;
+
 
 // Se definen todos las funciones.
 void reshapeCallback(GLFWwindow* Window, int widthRes, int heightRes);
@@ -152,11 +186,73 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 	sp2.init();
 	sp2.load();
 
+	// OpenAL init
+	alutInit(0, NULL);
+
+	alListenerfv(AL_POSITION, listenerPos);
+	alListenerfv(AL_VELOCITY, listenerVel);
+	alListenerfv(AL_ORIENTATION, listenerOri);
+
+	alGetError(); // clear any error messages
+
+	if (alGetError() != AL_NO_ERROR) {
+		printf("- Error creating buffers !!\n");
+		exit(1);
+	}
+	else {
+		printf("init() - No errors yet.");
+	}
+
+	// Generate buffers, or else no sound will happen!
+	alGenBuffers(NUM_BUFFERS, buffer);
+
+	//buffer[0] = alutCreateBufferFromFile("../sounds/05 He Who Walks With Wolves.wav");
+	buffer[0] = alutCreateBufferFromFile("../sounds/lawyer1.wav");
+	//buffer[0] = alutCreateBufferHelloWorld();
+
+	alGetError(); /* clear error */
+	alGenSources(NUM_SOURCES, source);
+
+	if (alGetError() != AL_NO_ERROR) {
+		printf("- Error creating sources !!\n");
+		exit(2);
+	}
+	else {
+		printf("init - no errors after alGenSources\n");
+	}
+
+	alSourcef(source[0], AL_PITCH, 1.0f);
+	alSourcef(source[0], AL_GAIN, 1.0f);
+	alSourcefv(source[0], AL_POSITION, source0Pos);
+	alSourcefv(source[0], AL_VELOCITY, source0Vel);
+	alSourcei(source[0], AL_BUFFER, buffer[0]);
+	alSourcei(source[0], AL_LOOPING, AL_TRUE);
+	alSourcef(source[0], AL_MAX_DISTANCE, 120);
+
+
+	/*alSourcef(source[1], AL_PITCH, 1.0f);
+	alSourcef(source[1], AL_GAIN, 1.0f);
+	alSourcefv(source[1], AL_POSITION, source1Pos);
+	alSourcefv(source[1], AL_VELOCITY, source1Vel);
+	alSourcei(source[1], AL_BUFFER, buffer[1]);
+	alSourcei(source[1], AL_LOOPING, AL_TRUE);
+	alSourcef(source[2], AL_PITCH, 1.0f);
+	alSourcef(source[2], AL_GAIN, 1.0f);
+	alSourcefv(source[2], AL_POSITION, source2Pos);
+	alSourcefv(source[2], AL_VELOCITY, source2Vel);
+	alSourcei(source[2], AL_BUFFER, buffer[2]);
+	alSourcei(source[2], AL_LOOPING, AL_TRUE);*/
+
+
 
 	alien.loadModel("../objects/SistemaSolar/AlienSistemaSolar.dae");
+
 	starship.loadModel("../objects/Starship2/orbiter bugship.obj");
-	//falcon.loadModel("../objects/Starship3/millenium-falcon.obj");
+	falcon.loadModel("../objects/Falcon/Millennium_Falcon.obj");
 	nanosuit.loadModel("../objects/nanosuit/nanosuit.obj");
+	satellite.loadModel("../objects/Satellite/UHFSatcom.obj");
+	interestellar.loadModel("../objects/Girador/FA-59A-Mako.obj");
+	astronauta.loadModel("../objects/nanosuit/nanosuit.obj");
 
 	lightingShaderMix.initialize("../Shaders/loadModelLightingMix.vs", "../Shaders/loadModelLightingMix.fs");
 	lightingShader.initialize("../Shaders/loadModelLighting.vs", "../Shaders/loadModelLighting.fs");
@@ -293,6 +389,8 @@ void applicationLoop() {
 
 	SBB planet_sbb[11];
 	SBB sbbShip = getSBB(starship.getMeshes());
+	SBB sbbFalcon = getSBB(falcon.getMeshes());
+	SBB sbbGira = getSBB(interestellar.getMeshes());
 
 	animate = true;
 
@@ -340,7 +438,7 @@ void applicationLoop() {
 		glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
 
 		GLfloat timeValue = TimeManager::Instance().GetTime() - lastTime;
-		
+
 
 		/******************** SUN ***********************************/
 		// Get the uniform locations
@@ -365,9 +463,9 @@ void applicationLoop() {
 		int segundaMapLoc = lightingShader.getUniformLocation("material.segunda");
 
 		glUniform1i(ambientMapLoc, 0);
-		glUniform1i(diffuseMapLoc, 5);
-		glUniform1i(specularMapLoc, 5);
-		glUniform1i(segundaMapLoc, 5);
+		glUniform1i(diffuseMapLoc, 0);
+		glUniform1i(specularMapLoc, 0);
+		glUniform1i(segundaMapLoc, 0);
 
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
@@ -387,7 +485,7 @@ void applicationLoop() {
 
 		glm::mat4 moon;
 
-		moon = orbit(moon, 3.0, 3.5, 0.4, tiempo*10);
+		moon = orbit(moon, 3.0, 3.5, 0.4, tiempo * 10);
 		moon = orbit(moon, 30.0 * 6.2, 35.0 * 6.2, 0.35, tiempo);
 
 		moon = glm::rotate(moon, (float)timeValue * 0.15f,
@@ -415,38 +513,78 @@ void applicationLoop() {
 		/***********************************************************/
 
 
-		/**********************  STARSHIP CAMERA *************************/
+		/********************** SATELLITE *************************/
 		lightingShader.turnOn();
 
-		glm::mat4 ship;
-		ship = glm::translate(ship, glm::vec3(inputManager.getCameraFPS()->Position.x, inputManager.getCameraFPS()->Position.y,
-			inputManager.getCameraFPS()->Position.z));
-		ship = glm::rotate(ship, 3.1416f , glm::vec3(0.0f, 1.0f, 0.0f));
-		ship = glm::rotate(ship, glm::radians(inputManager.getCameraFPS()->Yaw), glm::vec3(0.0f, -1.0f, 0.0f));
-		ship = glm::rotate(ship, glm::radians(inputManager.getCameraFPS()->Pitch), glm::vec3(0.0f, 0.0f, -1.0f));
-		ship = glm::translate(ship, glm::vec3(-1.0f, -0.5f, 0.0f));
-		//ship = glm::rotate(ship, glm::radians(inputManager.getCameraFPS()->Yaw), glm::vec3(0.0f, -1.0f, 0.0f));
-		ship = glm::rotate(ship, glm::radians(inputManager.getCameraFPS()->Pitch), glm::vec3(0.0f, 0.0f, -1.0f));
-		ship = glm::scale(ship, glm::vec3(0.001f, 0.001f, 0.001f));
-
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(ship));
-		starship.render(&lightingShader);
-
-		SBB sbbShipTest;
-		sbbShipTest.center = glm::vec3(ship * glm::vec4(0, 0, 0, 1));
-		sbbShipTest.ratio = sbbShip.ratio * 0.001f;
+		glm::mat4 sate;
+		sate = orbit(sate, 1.2, 1.2, 0.1, tiempo * 10);
+		sate = orbit(sate, 30.0 * 6.2, 35.0 * 6.2, 0.35, tiempo);
+		sate = glm::scale(sate, glm::vec3(0.01f, 0.01f, 0.01f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(sate));
+		satellite.render(&lightingShader);
 
 		lightingShader.turnOff();
 		/***************************************************************/
 
-		/**********************  PREUBA *************************/
+
+
+
+		/********************** GIRA *************************/
+		lightingShader.turnOn();
+
+		glm::mat4 gira;
+		gira = glm::translate(gira, glm::vec3(-400.0 + (tiempo * 250.0), 0.0f, -100.0f));
+		gira = glm::rotate(gira, glm::radians(90.0f) , glm::vec3(0.0, 1.0, 0.0));
+		gira = glm::scale(gira, glm::vec3(0.1f, 0.1f, 0.1f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(gira));
+		interestellar.render(&lightingShader);
+
+		SBB sbbInterestela;
+		sbbInterestela.center = glm::vec3(gira * glm::vec4(0, 0, 0, 1));
+		sbbInterestela.ratio = sbbGira.ratio * 0.1f;
+
+		lightingShader.turnOff();
+		/***************************************************************/
+
+
+		/**********************  STARSHIP CAMERA *************************/
+		lightingShader.turnOn();
+
+		glm::mat4 falconM;
+		//ship = glm::translate(ship, glm::vec3(0.0, 0.0, 0.0));
+		falconM = glm::translate(falconM, glm::vec3(inputManager.getCameraFPS()->Position.x, inputManager.getCameraFPS()->Position.y, inputManager.getCameraFPS()->Position.z));
+		falconM = glm::rotate(falconM, 3.1416f / 2, glm::vec3(0.0f, 1.0f, 0.0f));
+		falconM = glm::rotate(falconM, glm::radians(inputManager.getCameraFPS()->Yaw), glm::vec3(0.0f, -1.0f, 0.0f));
+		falconM = glm::rotate(falconM, glm::radians(inputManager.getCameraFPS()->Pitch), glm::vec3(-1.0f, 0.0f, 0.0f));
+		falconM = glm::translate(falconM, glm::vec3(0.0f, -0.3f, 0.7f));
+		//falconM = glm::rotate(falconM, glm::radians(inputManager.getCameraFPS()->Yaw), glm::vec3(0.0f, -1.0f, 0.0f));
+		falconM = glm::rotate(falconM, glm::radians(inputManager.getCameraFPS()->Pitch), glm::vec3(-1.0f, 0.0f, 0.0f));
+		falconM = glm::scale(falconM, glm::vec3(0.001f, 0.001f, 0.001f));
+
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(falconM));
+		falcon.render(&lightingShader);
+
+		SBB sbbFalconTest;
+		sbbFalconTest.center = glm::vec3(falconM * glm::vec4(0, 0, 0, 1));
+		sbbFalconTest.ratio = sbbShip.ratio * 0.001f;
+
+		lightingShader.turnOff();
+		/***************************************************************/
+
+		/********************** FLYING SHIP LAMNISCATA *************************/
 		lightingShader.turnOn();
 
 		glm::mat4 model2;
-		model2 = glm::translate(model2, glm::vec3(3.0f, -4.0f, -1.0f));
-		model2 = glm::scale(model2, glm::vec3(0.8f, 0.8f, 0.8f));
+		model2 = glm::translate(model2, glm::vec3(40.0, 70.0, 40.0));
+		model2 = glm::translate(model2, glm::vec3((300 * cos(tiempo)) / (glm::exp2(sin(tiempo) + 1)), 30.0, (300 * glm::sqrt(2) * cos(tiempo) * sin(tiempo)) / (glm::exp2(sin(tiempo)))));
+		model2 = glm::rotate(model2, glm::radians(tiempo * 200), glm::vec3(0.0, 1.0, 0.0));
+		model2 = glm::scale(model2, glm::vec3(0.05f, 0.05f, 0.05f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model2));
-		falcon.render(&lightingShader);
+		starship.render(&lightingShader);
+
+		SBB sbbShipTest;
+		sbbShipTest.center = glm::vec3(model2 * glm::vec4(0, 0, 0, 1));
+		sbbShipTest.ratio = sbbShip.ratio * 0.05f;
 
 		lightingShader.turnOff();
 		/***************************************************************/
@@ -474,7 +612,7 @@ void applicationLoop() {
 		sp2.render();
 		lightingShader.turnOff();
 		/***********************************************************/
-				
+
 		/******************** Venus ***********************************/
 		lightingShader.turnOn();
 		glm::mat4 venus;
@@ -592,24 +730,30 @@ void applicationLoop() {
 
 		sp2.render();
 		lightingShader.turnOff();
-
-		glm::mat4 model1;
-		model1 = orbit(model1, 50.5 * 6.4, 54.4 * 6.4, 0.27, tiempo);
-		model1 = glm::rotate(model1, (float)timeValue * 0.15f,
-			glm::vec3(0.0f, 1.0f, 0.0f));
-		model1 = glm::scale(model1, glm::vec3(0.8, 0.8, 0.8));
-		model1 = glm::translate(model1, glm::vec3(0.0, 68.0, 0.0));
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model1));
-		modelo1.render(&lightingShader);
-		lightingShader.turnOff();
 		/***********************************************************/
+
+		/********************** ASTRONAUTA *************************/
+		lightingShader.turnOn();
+
+		glm::mat4 ironman;
+		ironman = orbit(ironman, 50.5 * 6.4, 54.4 * 6.4, 0.27, tiempo);
+		ironman = glm::rotate(ironman, (float)timeValue * 0.15f,
+			glm::vec3(0.0f, 1.0f, 0.0f));
+		ironman = glm::translate(ironman, glm::vec3(0.0, 10.5, 0.0));
+		ironman = glm::scale(ironman, glm::vec3(0.5f, 0.5f, 0.5f));
+
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(ironman));
+		astronauta.render(&lightingShader);
+
+		lightingShader.turnOff();
+		/***************************************************************/
 
 		/******************** SATURN ***********************************/
 		lightingShader.turnOn();
 
 		glm::mat4 saturn;
 
-		saturn = orbit(saturn, 60.0 * 6.5, 63.8 * 6.5 , 0.20, tiempo);
+		saturn = orbit(saturn, 60.0 * 6.5, 63.8 * 6.5, 0.20, tiempo);
 		saturn = glm::rotate(saturn, (float)timeValue * 0.4f,
 			glm::vec3(0.0f, 1.0f, 0.0f));
 		saturn = glm::scale(saturn, glm::vec3(6.02, 6.02, 6.02));
@@ -720,6 +864,9 @@ void applicationLoop() {
 		lampShader.turnOff();
 		/*************************************************************/
 
+
+		
+
 		/************************** SKYBOX **************************/
 		cubemapShader.turnOn();
 
@@ -748,25 +895,92 @@ void applicationLoop() {
 		glCullFace(GL_FRONT);
 		glDepthFunc(GL_LEQUAL);
 		sp2.render();
+		sp.render();
 		glCullFace(oldCullFaceMode);
 		glDepthFunc(oldDepthFuncMode);
 
 		cubemapShader.turnOff();
 		/****************************************************************/
 
+		/******************** BLACKHOLE ***********************************/
+
+		envCubeShader.turnOn();
+
+		view = inputManager.getCameraFPS()->GetViewMatrix();
+		viewLoc = envCubeShader.getUniformLocation("view");
+		projLoc = envCubeShader.getUniformLocation("projection");
+		modelLoc = envCubeShader.getUniformLocation("model");
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
+
+		glm::mat4 blackhole;
+		blackhole = glm::translate(blackhole, glm::vec3(300, -100.0, 300));
+		blackhole = glm::rotate(blackhole, (float)timeValue * 2.0f,
+			glm::vec3(0.7f, 1.0f, 0.3f));
+		blackhole = glm::scale(blackhole, glm::vec3(42.0,40.0,40.0));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(blackhole));
+
+		cubeMaptexture->Bind(GL_TEXTURE0);
+		cubeTextureId = envCubeShader.getUniformLocation("skybox");
+		glUniform1f(cubeTextureId, 0);
+
+		viewPosLoc = envCubeShader.getUniformLocation("viewPos");
+		glUniform3fv(viewPosLoc, 1, glm::value_ptr(inputManager.getCameraFPS()->Position));
+
+		//modelo1.render(&envCubeShader);
+		sp.render();
+
+		envCubeShader.turnOff();
+		/**************************************************************/
+
+		source0Pos[0] = 300;
+		source0Pos[1] = -100;
+		source0Pos[2] = 300;
+		alSourcefv(source[0], AL_POSITION, source0Pos);
+
+		listenerPos[0] = inputManager.getCameraFPS()->Position.x;
+		listenerPos[1] = inputManager.getCameraFPS()->Position.y;
+		listenerPos[2] = inputManager.getCameraFPS()->Position.z;
+		alListenerfv(AL_POSITION, listenerPos);
+
+		listenerOri[0] = inputManager.getCameraFPS()->Front.x;
+		listenerOri[1] = inputManager.getCameraFPS()->Front.y;
+		listenerOri[2] = inputManager.getCameraFPS()->Front.z;
+		listenerOri[3] = inputManager.getCameraFPS()->Up.x;
+		listenerOri[4] = inputManager.getCameraFPS()->Up.y;
+		listenerOri[5] = inputManager.getCameraFPS()->Up.z;
+		alListenerfv(AL_ORIENTATION, listenerOri);
+
+		if (inputManager.getKeyState()[InputCodes::u]) {
+			alSourcePlay(source[0]);
+			printf("HOOOOOOOO");
+		}
+
+
 		if (animate)
 			tiempo += aumento;
 
+		if (testSphereSphereIntersection(sbbFalconTest, sbbShipTest))
+			std::cout << "Model collision: Millenium Falcon & Starship" << std::endl;
+		if (testSphereSphereIntersection(sbbFalconTest, sbbInterestela))
+			std::cout << "Model collision: Millenium Falcon & Interestela" << std::endl;
+		if (testSphereSphereIntersection(sbbShipTest, sbbInterestela))
+			std::cout << "Model collision: Starship & Interestela" << std::endl;
 		//Checar colisiones entre todos los planetas
 		for (int i = 0; i < 11; i++) {
 			if (testSphereSphereIntersection(planet_sbb[i], sbbShipTest))
 				std::cout << "Model collision:" << i << " & Starship" << std::endl;
+			if (testSphereSphereIntersection(planet_sbb[i], sbbFalconTest))
+				std::cout << "Model collision:" << i << " & Millenium Falcon" << std::endl;
+			if (testSphereSphereIntersection(planet_sbb[i], sbbInterestela))
+				std::cout << "Model collision:" << i << " & Interestela" << std::endl;
 			for (int j = i + 1; j < 11; j++)
 				if (testSphereSphereIntersection(planet_sbb[i], planet_sbb[j]))
 					std::cout << "Planet collision:" << i << " & " << j << std::endl;
 		}
 
 		glfwSwapBuffers(window);
+
 	}
 }
 
