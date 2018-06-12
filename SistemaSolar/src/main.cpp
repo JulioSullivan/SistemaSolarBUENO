@@ -44,6 +44,7 @@ Model alien;
 Model starship;
 Model nanosuit;
 Model falcon;
+Model anillos;
 
 Texture textureDifuse(GL_TEXTURE_2D, "../Textures/container2.png");
 Texture textureSpecular(GL_TEXTURE_2D, "../Textures/container2_specular.png");
@@ -162,6 +163,8 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 
 
 	alien.loadModel("../objects/SistemaSolar/AlienSistemaSolar.dae");
+
+	anillos.loadModel("../objects/anillos/anillos.dae");
 	starship.loadModel("../objects/Starship2/orbiter bugship.obj");
 	//falcon.loadModel("../objects/Starship3/millenium-falcon.obj");
 	nanosuit.loadModel("../objects/nanosuit/nanosuit.obj");
@@ -780,6 +783,21 @@ void applicationLoop() {
 		planet_sbb[7].ratio = 1.5 * 6.02;
 
 		sp2.render();
+
+		//anillos girando al rededor del planeta
+		glm::mat4 modelA;
+		modelA = orbit(modelA, 60.0 * 6.5, 63.8 * 6.5, 0.20, tiempo);
+		modelA = glm::rotate(modelA, (float)timeValue * 0.4f,
+			glm::vec3(0.0f, 1.0f, 0.0f));
+		modelA = glm::scale(modelA, glm::vec3(7.8, 7.8, 7.8));
+		modelA = glm::rotate(modelA, 90.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+		modelA = glm::translate(modelA, glm::vec3(0.0, 0.0, 0.0));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(modelA));
+		anillos.render(&lightingShader);
+		lightingShader.turnOff();
+
+
+
 		lightingShader.turnOff();
 		/***********************************************************/
 
