@@ -84,8 +84,11 @@ float tiempo = 0;
 float aumento = 0.0001;
 
 //Para el meteorito
-glm::vec3 posicion;
+glm::vec3 posicion = glm::vec3(0.0, 100.0, 0.0);
 float tamaño, velocidad, rad1, rad2;
+bool choque = false;
+float last_t;
+float n_tam = 0.0;
 
 // Se definen todos las funciones.
 void reshapeCallback(GLFWwindow* Window, int widthRes, int heightRes);
@@ -262,12 +265,14 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mode
 		posicion = glm::vec3(inputManager.getCameraFPS()->Position.x,
 			0.0, inputManager.getCameraFPS()->Position.z);
 		//Obtener un tamaño aleatorio entre 0.25 y 1.25
-		tamaño = ((rand() % 1000) + 250);
+		tamaño = ((rand() % 2000) + 250);
 		tamaño /= 1000;
 		velocidad = ((rand() % 100) + 50);
 		velocidad /= 100;
-		rad1 = ((rand() % 490) + 60);
-		rad2 = ((rand() % 100) + 10);
+		rad1 = ((rand() % 490) + 100);
+		rad2 = ((rand() % 200) + 10);
+		choque = false;
+		n_tam = 0.0;
 	}
 }
 
@@ -301,7 +306,6 @@ glm::mat4 orbit(glm::mat4 matriz, float radio1, float radio2, float velocidad, f
 	*/
 	return glm::translate(matriz, glm::vec3(cos(t*velocidad)*radio1, 0.0f, sin(t*velocidad)*radio2));
 }
-
 
 double lastUpdateTime = glfwGetTime(); // last update time
 double elapsedTime = lastUpdateTime;   // time elapsed since last update
@@ -736,15 +740,21 @@ void applicationLoop() {
 		/******************** METEORITE *********************************/
 		lightingShader.turnOn();
 		glm::mat4 meteor;
-		
-		meteor = orbit(meteor, rad1, rad2, velocidad, tiempo);
+		glm::mat4 particulas;
+
+		if (choque)
+			meteor = orbit(meteor, rad1, rad2, velocidad, last_t);
+		else
+			meteor = orbit(meteor, rad1, rad2, velocidad, tiempo);
 		meteor = glm::translate(meteor, posicion);
-		meteor = glm::rotate(meteor, tiempo, glm::vec3(0.0f, 1.0f, 0.0f));
-		meteor = glm::rotate(meteor, (float) glm::radians(-90.0),
+		meteor = glm::rotate(meteor, (float)glm::radians(-90.0),
 			glm::vec3(0.0f, 0.0f, 1.0f));
 		meteor = glm::scale(meteor, glm::vec3(tamaño, tamaño, tamaño));
 
-
+		if(tamaño > 0.0 && animate)
+			tamaño += n_tam;
+		particulas = meteor;
+		
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(meteor));
 
 		textureMeteor.bind(GL_TEXTURE0);
@@ -768,12 +778,21 @@ void applicationLoop() {
 
 		glGenVertexArrays(1, &VAO);
 		glBindVertexArray(VAO);
+		
 		particleShader.turnOn();
 		GLint modViewProjLoc = particleShader.getUniformLocation("MVP");
 		GLint timeLoc = particleShader.getUniformLocation("time");
 		glUniform1f(timeLoc, timeValue);
-		glUniformMatrix4fv(modViewProjLoc, 1, GL_FALSE, glm::value_ptr(projection*model*view*meteor));
-		glDrawArrays(GL_POINTS, 0, 1000);
+		if (choque) {
+			particulas = glm::rotate(meteor, tiempo * 100, glm::vec3(0.0f, 0.0f, 1.0f));
+			n_tam = -0.001;
+			glUniformMatrix4fv(modViewProjLoc, 1, GL_FALSE, glm::value_ptr(projection*model*view*particulas));
+			glDrawArrays(GL_POINTS, 0, 10000);
+		}
+		else {
+			glUniformMatrix4fv(modViewProjLoc, 1, GL_FALSE, glm::value_ptr(projection*model*view*meteor));
+			glDrawArrays(GL_POINTS, 0, 10000);
+		}
 
 		particleShader.turnOff();
 
@@ -831,11 +850,19 @@ void applicationLoop() {
 		for (int i = 0; i < 11; i++) {
 			if (testSphereSphereIntersection(planet_sbb[i], sbbShipTest))
 				std::cout << "Model collision:" << i << " & Starship" << std::endl;
-			if (testSphereSphereIntersection(planet_sbb[i], sbbMeteor))
-				std::cout << "Model collision:" << i << " & Meteor" << std::endl;
 			for (int j = i + 1; j < 11; j++)
 				if (testSphereSphereIntersection(planet_sbb[i], planet_sbb[j]))
 					std::cout << "Planet collision:" << i << " & " << j << std::endl;
+		}
+		//Colision entre meteoro y planetas
+		if(!choque)
+		for (int i = 0; i < 11; i++) {
+			if (testSphereSphereIntersection(planet_sbb[i], sbbMeteor)) {
+				choque = true;
+				last_t = tiempo;
+				std::cout << "Model collision:" << i << " & Meteor" << std::endl;
+				break;
+			}
 		}
 
 		glfwSwapBuffers(window);

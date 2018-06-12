@@ -5,8 +5,8 @@ uniform float time;
 
 const vec3 a = vec3(0,2,0); //acceleration of particles
 
-const float rate = 1/500.0; //rate of emission
-const float life = 3; //life of particle
+const float rate = 1/200.0; //rate of emission
+const float life = 2.5; //life of particle
 
 //constants
 const float PI = 3.14159;
