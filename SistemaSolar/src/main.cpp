@@ -44,6 +44,7 @@ Model alien;
 Model starship;
 Model nanosuit;
 Model falcon;
+Model anillos;
 
 Texture textureDifuse(GL_TEXTURE_2D, "../Textures/container2.png");
 Texture textureSpecular(GL_TEXTURE_2D, "../Textures/container2_specular.png");
@@ -165,6 +166,8 @@ void init(int width, int height, std::string strTitle, bool bFullScreen) {
 
 
 	alien.loadModel("../objects/SistemaSolar/AlienSistemaSolar.dae");
+
+	anillos.loadModel("../objects/anillos/anillos.dae");
 	starship.loadModel("../objects/Starship2/orbiter bugship.obj");
 	//falcon.loadModel("../objects/Starship3/millenium-falcon.obj");
 	nanosuit.loadModel("../objects/nanosuit/nanosuit.obj");
@@ -630,6 +633,136 @@ void applicationLoop() {
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model1));
 		alien.render(&lightingShader);
 		lightingShader.turnOff();
+
+
+		/******************** MOON IO ***********************************/
+		lightingShader.turnOn();
+
+
+		glm::mat4 moon1;
+
+		moon1 = orbit(moon1, 15.0, 15.5, 0.3, tiempo * 10);
+		moon1 = orbit(moon1, 50.0 * 6.4, 54.4 * 6.4, 0.27, tiempo);
+
+		moon1 = glm::rotate(moon1, (float)timeValue * 0.15f,
+			glm::vec3(0.0f, 1.0f, 0.0f));
+		moon1 = glm::scale(moon1, glm::vec3(0.12, 0.12, 0.12));
+
+
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(moon1));
+
+		textureMoon.bind(GL_TEXTURE0);
+
+		int IOMoon = lightingShader.getUniformLocation("material.segunda");
+
+		glUniform1i(diffuseMapLoc, 5);
+		glUniform1i(ambientMapLoc, 0);
+		glUniform1i(specularMapLoc, 5);
+		glUniform1i(segundaMoon, 5);
+
+		//sbb para la luna
+		planet_sbb[1].center = glm::vec3(moon1 * glm::vec4(0, 0, 0, 1));
+		planet_sbb[1].ratio = 1.5 * 0.08;
+
+		sp2.render();
+		lightingShader.turnOff();
+
+		/******************** MOON Europa ***********************************/
+		lightingShader.turnOn();
+
+
+		glm::mat4 moon2;
+
+		moon2 = orbit(moon2, -17.0, 17.5, 0.3, tiempo * 10);
+		moon2 = orbit(moon2, 51.0 * 6.4, 54.4 * 6.4, 0.27, tiempo);
+		moon2 = glm::translate(moon2, glm::vec3(0.0f, 2.0f, 0.0f));
+		moon2 = glm::rotate(moon2, (float)timeValue * 0.15f,
+			glm::vec3(0.0f, 1.0f, 0.0f));
+		moon2 = glm::scale(moon2, glm::vec3(0.19, 0.19, 0.19));
+
+
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(moon2));
+
+		textureMoon.bind(GL_TEXTURE0);
+
+		int EuropaMoon = lightingShader.getUniformLocation("material.segunda");
+
+		glUniform1i(diffuseMapLoc, 5);
+		glUniform1i(ambientMapLoc, 0);
+		glUniform1i(specularMapLoc, 5);
+		glUniform1i(segundaMoon, 5);
+
+		//sbb para la luna
+		planet_sbb[1].center = glm::vec3(moon2 * glm::vec4(0, 0, 0, 1));
+		planet_sbb[1].ratio = 1.5 * 0.08;
+
+		sp2.render();
+		lightingShader.turnOff();
+
+		/******************** MOON Ganymede ***********************************/
+		lightingShader.turnOn();
+
+
+		glm::mat4 moon3;
+
+		moon3 = orbit(moon3, -18.0, 18.5, 0.53, tiempo * 10);
+		moon3 = orbit(moon3, 50.2 * 6.4, 54.4 * 6.4, 0.27, tiempo);
+		moon3 = glm::translate(moon3, glm::vec3(0.0f, 3.5f, 0.0f));
+		moon3 = glm::rotate(moon3, (float)timeValue * 0.15f,
+			glm::vec3(0.0f, 1.0f, 0.0f));
+		moon3 = glm::scale(moon3, glm::vec3(0.25, 0.25, 0.25));
+
+
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(moon3));
+
+		textureMoon.bind(GL_TEXTURE0);
+
+		int GanymedeMoon = lightingShader.getUniformLocation("material.segunda");
+
+		glUniform1i(diffuseMapLoc, 5);
+		glUniform1i(ambientMapLoc, 0);
+		glUniform1i(specularMapLoc, 5);
+		glUniform1i(segundaMoon, 5);
+
+		//sbb para la luna
+		planet_sbb[1].center = glm::vec3(moon3 * glm::vec4(0, 0, 0, 1));
+		planet_sbb[1].ratio = 1.5 * 0.08;
+
+		sp2.render();
+		lightingShader.turnOff();
+
+		/******************** MOON Callisto ***********************************/
+		lightingShader.turnOn();
+
+
+		glm::mat4 moon4;
+
+		moon4 = orbit(moon4, 18.5, 19.0, 0.3, tiempo * 10);
+		moon4 = orbit(moon4, 51.5 * 6.4, 54.4 * 6.4, 0.27, tiempo);
+		moon4 = glm::translate(moon4, glm::vec3(0.0f, -4.0f, 0.0f));
+		moon4 = glm::rotate(moon4, (float)timeValue * 0.15f,
+			glm::vec3(0.0f, 1.0f, 0.0f));
+		moon4 = glm::scale(moon4, glm::vec3(0.2, 0.2, 0.2));
+
+
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(moon4));
+
+		textureMoon.bind(GL_TEXTURE0);
+
+		int CallistoMoon = lightingShader.getUniformLocation("material.segunda");
+
+		glUniform1i(diffuseMapLoc, 5);
+		glUniform1i(ambientMapLoc, 0);
+		glUniform1i(specularMapLoc, 5);
+		glUniform1i(CallistoMoon, 5);
+
+		//sbb para la luna
+		planet_sbb[1].center = glm::vec3(moon4 * glm::vec4(0, 0, 0, 1));
+		planet_sbb[1].ratio = 1.5 * 0.08;
+
+		sp2.render();
+		lightingShader.turnOff();
+
 		/***********************************************************/
 
 		/******************** SATURN ***********************************/
@@ -654,6 +787,21 @@ void applicationLoop() {
 		planet_sbb[7].ratio = 1.5 * 6.02;
 
 		sp2.render();
+
+		//anillos girando al rededor del planeta
+		glm::mat4 modelA;
+		modelA = orbit(modelA, 60.0 * 6.5, 63.8 * 6.5, 0.20, tiempo);
+		modelA = glm::rotate(modelA, (float)timeValue * 0.4f,
+			glm::vec3(0.0f, 1.0f, 0.0f));
+		modelA = glm::scale(modelA, glm::vec3(7.8, 7.8, 7.8));
+		modelA = glm::rotate(modelA, 90.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+		modelA = glm::translate(modelA, glm::vec3(0.0, 0.0, 0.0));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(modelA));
+		anillos.render(&lightingShader);
+		lightingShader.turnOff();
+
+
+
 		lightingShader.turnOff();
 		/***********************************************************/
 
